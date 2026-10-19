@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="golstream-version" content="dev">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#06090c" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="description" content="Gambeta Auriverde TV: club privado de canales y señales deportivas en vivo." />
+  <title>Gambeta Auriverde TV · En Vivo</title>
+  <link rel="icon" type="image/svg+xml" href="./logo/gambeta-auriverde-dark.svg" />
+  <link rel="preload" href="./data/catalogo-pro.json" as="fetch" crossorigin />
+  <link rel="preconnect" href="https://barinaslive1.boldmss.com" crossorigin />
+  <link rel="stylesheet" href="./css/app.css?v=gambeta3" />
+  <link rel="stylesheet" href="./css/gambeta.css?v=gambeta3" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap" media="print" onload="this.media='all'" />
+</head>
+
+<body class="min-h-screen bg-fondo font-sans text-slate-200 antialiased bloqueado-acceso">
+
+  <!-- ================= PANTALLA DE ACCESO (LOGIN POR TELÉFONO) ================= -->
+  <div id="pantalla-acceso" class="pantalla-acceso" role="dialog" aria-modal="true" aria-labelledby="titulo-acceso">
+    <div class="tarjeta-acceso">
+      <div class="acceso-logo-wrap">
+        <img src="./logo/gambeta-auriverde-dark.svg" alt="Escudo Gambeta Auriverde" class="acceso-logo" />
+      </div>
+      <div>
+        <span class="acceso-insignia">Club Privado · Señal VIP</span>
+      </div>
+      <h2 id="titulo-acceso" class="acceso-titulo">Gambeta <span class="text-auriverde-oro">Auriverde</span></h2>
+      <p class="mt-1.5 text-sm text-slate-300">Ingresa tu <b class="text-white">número de teléfono</b> autorizado para entrar a la transmisión.</p>
+
+      <form id="form-acceso-telefono" class="mt-4" autocomplete="off" novalidate>
+        <label for="input-acceso-telefono" class="sr-only">Número de teléfono</label>
+        <input
+          id="input-acceso-telefono"
+          type="tel"
+          inputmode="tel"
+          placeholder="Ej. 302 644 4564"
+          class="acceso-input"
+          required
+        />
+        <p id="error-acceso-telefono" class="mt-2.5 border border-vivo bg-vivo/20 px-3 py-2 text-xs font-bold text-white" role="alert" hidden></p>
+        <button id="btn-entrar-telefono" type="submit" class="acceso-btn">
+          Entrar a la Cancha
+        </button>
+      </form>
+
+      <div class="mt-4 flex items-center justify-between border-t border-white/15 pt-3 text-xs text-slate-400">
+        <span>Acceso exclusivo para amigos</span>
+        <button id="btn-admin-desde-login" type="button" class="font-bold text-auriverde-oro underline hover:text-white">
+          Panel Admin (PIN)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CABECERA PRINCIPAL ================= -->
+  <header class="cabecera">
+    <div class="cabecera-interior">
+      <a href="./" class="marca-gambeta" aria-label="Gambeta Auriverde, inicio">
+        <img id="logo-cabecera-img" src="./logo/gambeta-auriverde-01.svg" alt="Gambeta Auriverde" class="marca-escudo" />
+        <div class="marca-textos">
+          <span class="marca-titulo">GAMBETA <span>AURIVERDE</span></span>
+          <span class="marca-subtitulo">Club Privado · En Vivo</span>
+        </div>
+      </a>
+
+      <span id="info-lista" class="min-w-0 truncate text-right text-xs text-slate-400"></span>
+
+      <div class="cabecera-acciones">
+        <div id="usuario-activo-badge" class="badge-miembro" hidden>
+          <span class="badge-miembro-punto"></span>
+          <span id="usuario-activo-nombre">Amigo</span>
+        </div>
+        <button id="btn-tema" type="button" class="btn-cabecera" title="Cambiar entre Modo Claro y Modo Oscuro">
+          <span id="icono-tema" aria-hidden="true">☀</span>
+          <span id="texto-tema">Modo Claro</span>
+        </button>
+        <button id="btn-abrir-admin" type="button" class="btn-cabecera btn-cabecera-admin" title="Administrar números de teléfono autorizados">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Miembros (CRUD)</span>
+        </button>
+        <button id="btn-cerrar-sesion" type="button" class="btn-cabecera btn-cabecera-salir" title="Cerrar sesión" hidden>
+          Salir
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="principal">
+
+    <!-- ================= BARRA SUPERIOR COMPACTA Y COLAPSABLE DE LISTAS Y PAÍSES ================= -->
+    <details class="barra-listas-top" open aria-label="Selector rápido de listas de canales">
+      <summary>
+        <span class="barra-listas-titulo">
+          <span class="indicador-colapso">▼</span>
+          Listas y Países en Vivo (Plegar / Desplegar)
+        </span>
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <button id="btn-epg" type="button" class="btn-secundario !px-2 !py-0.5 text-xs" title="Guía de programación (EPG / XMLTV)">
+            Guía EPG <span id="cuenta-epg" class="text-xs font-normal text-cancha"></span>
+          </button>
+          <button id="btn-atajos" type="button" class="btn-secundario !px-2 !py-0.5 text-xs" title="Atajos de teclado (?)">
+            Controles
+          </button>
+        </div>
+      </summary>
+      <div id="pestanas-listas" class="navegacion-listas" role="tablist" aria-label="Listas de canales"></div>
+    </details>
+
+    <!-- Progreso / error de listas -->
+    <div id="estado-carga" class="mb-3 flex items-center gap-3 rounded-xl border border-linea bg-sup px-4 py-3" role="status" hidden>
+      <span class="spinner spinner-sm" aria-hidden="true"></span>
+      <div class="min-w-0 flex-1">
+        <p id="texto-carga" class="truncate text-sm text-slate-300">Descargando lista…</p>
+        <div class="mt-1.5 h-1 overflow-hidden rounded-full bg-sup-3"><div id="barra-carga" class="barra-carga h-full rounded-full bg-cancha"></div></div>
+      </div>
+      <button id="btn-cancelar" type="button" class="text-sm text-slate-400 hover:text-white">Cancelar</button>
+    </div>
+    <div id="error-carga" class="mb-3 flex items-start gap-3 rounded-xl border border-vivo/40 bg-vivo/10 px-4 py-3" role="alert" hidden>
+      <p id="texto-error-carga" class="min-w-0 flex-1 text-sm text-slate-200"></p>
+      <button id="btn-reintentar-lista" type="button" class="shrink-0 text-sm font-semibold text-vivo hover:text-white">Reintentar</button>
+    </div>
+
+    <div class="disposicion">
+
+      <!-- ========== REPRODUCTOR ========== -->
+      <section id="zona-reproductor" class="zona-reproductor" aria-label="Reproductor">
+        <div id="contenedor-video" class="contenedor-video" data-estado="cargando">
+          <video id="video" autoplay muted playsinline webkit-playsinline controls preload="auto" autopictureinpicture x-webkit-airplay="allow"></video>
+          <iframe
+            id="iframe-la18hd"
+            class="iframe-reproductor-externo"
+            title="Señal Web La18HD"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowfullscreen
+            referrerpolicy="no-referrer"
+            hidden
+          ></iframe>
+          <div class="video-esqueleto" aria-hidden="true"></div>
+          <div id="capa-cargando" class="video-capa video-capa-carga" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <p id="texto-cargando" role="status">Conectando…</p>
+          </div>
+          <div id="capa-reposo" class="video-capa video-capa-reposo" hidden>
+            <img src="./logo/gambeta-auriverde-01.svg" alt="" class="mb-2 h-16 w-16 object-contain opacity-90" />
+            <p id="texto-reposo" class="font-display text-2xl font-semibold text-white">Elige una señal</p>
+            <p id="subtexto-reposo" class="text-sm text-slate-400">Las señales verificadas están justo debajo.</p>
+          </div>
+          <div id="osd" class="osd" aria-hidden="true">
+            <span id="osd-numero" class="font-display text-2xl font-bold tabular-nums text-cancha"></span>
+            <span id="osd-texto" class="truncate font-display text-lg font-semibold text-white"></span>
+          </div>
+        </div>
+
+        <!-- Barra activa cuando se reproduce una señal web La18HD -->
+        <div id="barra-iframe-externo" class="barra-iframe-externo" hidden>
+          <span>Reproduciendo señal web embebida de La18HD</span>
+          <div class="flex items-center gap-2">
+            <a id="link-abrir-la18hd" href="https://la18hd.su/" target="_blank" rel="noopener noreferrer" class="underline font-bold">Abrir en pestaña</a>
+            <button id="btn-cerrar-iframe-la18hd" type="button" class="btn-primario !px-2.5 !py-1 text-xs">
+              Volver al reproductor M3U
+            </button>
+          </div>
+        </div>
+
+        <!-- En reproducción: nombre, estado y acciones -->
+        <div class="barra-ahora">
+          <div class="ahora-info">
+            <h1 id="ficha-titulo" class="ahora-titulo">Gambeta Auriverde</h1>
+            <div id="ficha-meta" class="ahora-meta">Conectando con la señal principal…</div>
+          </div>
+          <div class="ahora-acciones">
+            <button id="activar-sonido" type="button" class="accion-sonido" hidden>
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+              Activar sonido
+            </button>
+            <button id="btn-anterior" type="button" class="accion" title="Canal anterior (↑)" disabled>
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span class="sr-only">Canal anterior</span>
+            </button>
+            <button id="btn-siguiente" type="button" class="accion" title="Canal siguiente (↓)" disabled>
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="sr-only">Canal siguiente</span>
+            </button>
+            <button id="btn-fav-ficha" type="button" class="accion" aria-pressed="false" title="Agregar a favoritos" disabled>
+              <svg viewBox="0 0 24 24" class="icono-estrella h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg><span class="sr-only">Favorito</span>
+            </button>
+            <button id="btn-copiar" type="button" class="accion" title="Copiar URL del stream (VLC)" disabled>
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="sr-only">Copiar URL</span>
+            </button>
+            <button id="btn-pip" type="button" class="accion" aria-pressed="false" title="Ventana flotante (P)" hidden>
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor"/></svg>
+              <span class="sr-only">Picture-in-Picture</span>
+            </button>
+            <button id="btn-pantalla" type="button" class="accion" aria-pressed="false" title="Pantalla completa (F)">
+              <svg viewBox="0 0 24 24" class="icono-expandir h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+              <svg viewBox="0 0 24 24" class="icono-contraer h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+              <span class="sr-only">Pantalla completa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Estado del reproductor -->
+        <div id="estado-reproductor" class="estado-reproductor">
+          <div id="toasts" class="toasts" aria-live="polite"></div>
+          <div id="capa-error" class="tarjeta-error" role="alert" hidden>
+            <p class="font-semibold text-white">Señal no disponible</p>
+            <p id="texto-error" class="text-sm text-slate-400"></p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button id="btn-siguiente-error" type="button" class="btn-primario">Siguiente canal <kbd class="tecla tecla-oscura">↓</kbd></button>
+              <button id="btn-reintentar" type="button" class="btn-secundario">Reintentar</button>
+              <button id="btn-copiar-error" type="button" class="btn-secundario" title="Copia el enlace para abrirlo en VLC u otro reproductor">Copiar URL</button>
+            </div>
+          </div>
+          <button id="respaldo-partido" type="button" class="aviso-respaldo" hidden>Cambiar a la señal de respaldo</button>
+          <div id="emergencia-senal" class="aviso-emergencia" hidden>
+            <p id="mensaje-emergencia" role="status"></p>
+            <button id="reverificar-senales" type="button">Volver a comprobar señales</button>
+          </div>
+        </div>
+
+        <!-- Señales deportivas verificadas de La18HD (Win Sports, ESPN, DSports, Fox, TNT) -->
+        <details id="seccion-la18hd" class="caja-plegable caja-la18hd" open>
+          <summary>
+            <span>Señales Deportivas Web · La18HD (Win Sports, ESPN, DSports, TNT)</span>
+            <span class="indicador-colapso">Plegar / Desplegar</span>
+          </summary>
+          <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div id="la18hd-tabs" class="la18hd-tabs" role="tablist" aria-label="Categorías La18HD"></div>
+            <div class="flex items-center gap-1.5">
+              <button id="btn-eventos-la18hd" type="button" class="btn-primario !px-2.5 !py-1 text-xs">
+                Agenda Eventos La18HD
+              </button>
+              <button id="btn-refrescar-la18hd" type="button" class="btn-secundario !px-2 !py-1 text-xs" title="Refrescar estado online de La18HD">
+                Actualizar
+              </button>
+            </div>
+          </div>
+          <div id="la18hd-canales" class="la18hd-grid scroll-fino"></div>
+        </details>
+
+        <!-- Señales destacadas M3U -->
+        <section id="partido-hoy" class="senales" aria-labelledby="titulo-partido-hoy">
+          <h2 id="titulo-partido-hoy" class="senales-titulo">Señales Deportivas Rápidas (M3U)</h2>
+          <div class="partido-senales" role="group" aria-label="Señales destacadas">
+            <button type="button" data-senal="0" aria-pressed="false" disabled><b>Señal 1</b><span data-nombre>ESPN</span><small data-salud="0">Verificando</small></button>
+            <button type="button" data-senal="1" aria-pressed="false" disabled><b>Señal 2</b><span data-nombre>ESPN 2</span><small data-salud="1">Verificando</small></button>
+            <button type="button" data-senal="2" aria-pressed="false" disabled><b>Señal 3</b><span data-nombre>ESPN 3</span><small data-salud="2">Verificando</small></button>
+          </div>
+          <p id="estado-senales" class="sr-only" role="status"></p>
+        </section>
+
+        <!-- Chat privado del parche -->
+        <details id="caja-chat" class="caja-plegable">
+          <summary>Chat de la Tribuna <span class="text-xs font-normal text-slate-500">· comenta el partido con tus amigos</span></summary>
+          <section id="chat-partido" aria-labelledby="chat-titulo">
+            <div class="chat-cabecera"><h2 id="chat-titulo">Chat del Partido en Vivo</h2><span id="chat-estado" role="status">Conectando…</span></div>
+            <p class="chat-nota">Comenta el partido en tiempo real con el grupo.</p>
+            <div id="chat-mensajes" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mensajes del grupo"><p id="chat-vacio">Todavía no hay mensajes. ¡Escribe el primero!</p></div>
+            <form id="chat-form" autocomplete="off">
+              <div class="chat-identidad">
+                <label>Tu Nombre / Apodo<input id="chat-apodo" name="apodo" maxlength="24" placeholder="Tu apodo" required /></label>
+                <label>País / Parche<select id="chat-pais" name="pais" required>
+                  <option value="Colombia" selected>Colombia</option><option>Chile</option><option>Argentina</option><option>Perú</option><option>México</option><option>Ecuador</option><option>Uruguay</option><option>Brasil</option><option>España</option><option>Estados Unidos</option><option>Otro</option>
+                </select></label>
+              </div>
+              <div class="chat-componer"><label class="sr-only" for="chat-texto">Mensaje</label><input id="chat-texto" name="mensaje" maxlength="180" placeholder="¡Qué golazo! ¿Cómo les va la señal?" required /><button id="chat-enviar" type="submit">Enviar</button></div>
+            </form>
+            <div class="chat-rapidos" aria-label="Mensajes rápidos">
+              <button type="button" data-chat-rapido="fluido">Se ve 10/10</button>
+              <button type="button" data-chat-rapido="corte">Se cortó esta señal</button>
+              <button type="button" data-chat-rapido="gol">¡GOOOOL!</button>
+            </div>
+            <div id="chat-oferta-servidor" role="status" hidden><p id="chat-oferta-texto"></p><button id="chat-cambiar-servidor" type="button">Cambiar ahora al siguiente servidor</button></div>
+            <p id="chat-error" role="status" hidden></p>
+          </section>
+        </details>
+
+        <!-- Guía y avisos del canal actual -->
+        <div id="ficha-epg" class="mt-3 border-t border-linea pt-3" hidden></div>
+        <ul id="ficha-avisos" class="mt-3 space-y-1.5 text-xs text-amber-200/90" hidden></ul>
+        <p id="ficha-url" hidden></p>
+        <div hidden>
+          <label for="sel-calidad">Calidad de video</label>
+          <select id="sel-calidad" disabled><option value="-1">Auto</option></select>
+        </div>
+      </section>
+
+      <!-- ========== CANALES ========== -->
+      <aside class="zona-canales" aria-label="Canales">
+        <div id="panel" class="panel-canales scroll-fino">
+          <h2 class="titulo-seccion">Explorador de Canales</h2>
+          <!-- Buscador y filtros compactos y colapsables (sin emojis) -->
+          <div class="sticky top-14 z-20 -mx-4 bg-fondo/95 px-4 pb-2 pt-1 backdrop-blur lg:top-0 lg:mx-0 lg:px-0">
+            <div class="buscador-caja relative">
+              <svg viewBox="0 0 24 24" class="buscador-icono pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <label for="buscador" class="sr-only">Buscar canal</label>
+              <input id="buscador" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search"
+                placeholder="Buscar canal, liga o país… (ej. ESPN, Win, Caracol, Deportes)"
+                class="w-full border border-linea bg-sup py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-slate-500 focus:border-cancha/60 focus:outline-none focus:ring-2 focus:ring-cancha/20" />
+              <kbd class="buscador-tecla pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 border border-linea px-1.5 text-[10px] text-slate-500 lg:block">/</kbd>
+            </div>
+
+            <details class="filtros-categorias-caja" open>
+              <summary>
+                <span>Categorías de canales</span>
+                <span class="text-[10px] opacity-75">Plegar / Desplegar ▼</span>
+              </summary>
+              <div id="chips" class="filtros-contenido" role="tablist" aria-label="Filtrar por tipo de contenido">
+                <button type="button" class="chip" role="tab" data-filtro="todos" aria-pressed="true" aria-selected="true">Todos</button>
+                <button type="button" class="chip" role="tab" data-filtro="deportes" aria-pressed="false" aria-selected="false">Deportes <span data-cuenta="deportes" class="tabular-nums opacity-70"></span></button>
+                <button type="button" class="chip" role="tab" data-filtro="noticias" aria-pressed="false" aria-selected="false">Noticias <span data-cuenta="noticias" class="tabular-nums opacity-70"></span></button>
+                <button type="button" class="chip" role="tab" data-filtro="peliculas" aria-pressed="false" aria-selected="false">Películas <span data-cuenta="peliculas" class="tabular-nums opacity-70"></span></button>
+                <button type="button" class="chip" role="tab" data-filtro="entretenimiento" aria-pressed="false" aria-selected="false">Entretenimiento <span data-cuenta="entretenimiento" class="tabular-nums opacity-70"></span></button>
+                <button type="button" class="chip" role="tab" data-filtro="favoritos" aria-pressed="false" aria-selected="false">Favoritos <span data-cuenta="favoritos" class="tabular-nums opacity-70"></span></button>
+              </div>
+            </details>
+
+            <details class="filtros-avanzados">
+              <summary>Filtros avanzados y verificador</summary>
+              <div class="mt-2 flex items-center gap-2">
+                <label for="sel-grupo" class="sr-only">Categoría exacta de la lista</label>
+                <select id="sel-grupo" class="control min-w-0 flex-1 !py-1.5 text-xs" disabled><option value="">Todas las categorías</option></select>
+              </div>
+
+              <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
+                <label class="inline-flex cursor-pointer items-center gap-2 hover:text-slate-300">
+                  <input id="chk-global" type="checkbox" class="h-3.5 w-3.5 rounded border-linea bg-sup accent-cancha" checked />
+                  Buscar en mis listas <span id="estado-global" class="tabular-nums"></span>
+                </label>
+                <label class="inline-flex cursor-pointer items-center gap-2 hover:text-slate-300">
+                  <input id="chk-geo" type="checkbox" checked class="h-3.5 w-3.5 rounded border-linea bg-sup accent-cancha" />
+                  Ocultar geobloqueados
+                </label>
+                <label class="inline-flex cursor-pointer items-center gap-2 hover:text-slate-300">
+                  <input id="chk-muertos" type="checkbox" checked class="h-3.5 w-3.5 rounded border-linea bg-sup accent-cancha" />
+                  Ocultar señales interrumpidas
+                </label>
+              </div>
+
+              <div class="mt-2 flex items-center gap-2 text-xs">
+                <button id="btn-verificar" type="button" class="control !px-2.5 !py-1 text-xs" disabled title="Comprueba qué canales de la vista responden">
+                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span id="texto-verificar">Verificar canales</span>
+                </button>
+                <div id="estado-verificacion" class="min-w-0 flex-1 truncate text-slate-500" role="status"></div>
+                <span id="contador" class="shrink-0 tabular-nums text-slate-500"></span>
+              </div>
+              <div id="barra-verificacion-caja" class="mt-1.5 h-0.5 overflow-hidden rounded-full bg-sup-3" hidden><div id="barra-verificacion" class="h-full rounded-full bg-cancha transition-[width]"></div></div>
+            </details>
+          </div>
+
+          <!-- Sin lista cargada -->
+          <div id="panel-vacio" class="rounded-2xl border border-dashed border-linea p-6 text-center" hidden>
+            <p class="font-display text-xl font-semibold text-white">Sin lista cargada</p>
+            <p class="mt-1 text-sm text-slate-400">Elige una lista para empezar:</p>
+            <div id="atajos" class="mt-4 flex flex-wrap justify-center gap-2"></div>
+          </div>
+
+          <ul id="lista-canales" class="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-1" aria-label="Lista de canales"></ul>
+          <div id="centinela" class="flex justify-center py-4 text-xs text-slate-600" hidden>Cargando más canales…</div>
+          <p id="sin-resultados" class="vacio" hidden></p>
+
+          <!-- Resultados de la búsqueda global -->
+          <section id="seccion-global" class="mt-5 pb-4" hidden aria-label="Resultados en otras listas">
+            <h2 class="mb-2 flex items-center gap-2 font-display text-base font-bold uppercase tracking-wider text-white">
+              <span class="h-3.5 w-1 rounded-full bg-cancha"></span>En otras listas <span id="cuenta-global" class="text-xs font-normal normal-case tracking-normal text-slate-500"></span>
+            </h2>
+            <ul id="lista-global" class="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-1"></ul>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <div class="secundario">
+      <!-- ================= AGENDA DEPORTIVA ================= -->
+      <section id="agenda" class="mt-3 rounded-2xl border border-linea bg-sup p-3" aria-labelledby="titulo-agenda">
+        <div class="agenda-cabecera">
+          <button id="btn-agenda-plegar" type="button" class="agenda-titulo text-left" aria-expanded="true" aria-controls="agenda-cuerpo">
+            <span class="h-3.5 w-1 shrink-0 rounded-full bg-cancha"></span>
+            <h2 id="titulo-agenda" class="font-display text-base font-bold uppercase tracking-wider text-white">Agenda de Partidos Hoy</h2>
+            <span id="agenda-resumen" class="text-xs font-normal text-slate-500"></span>
+            <svg viewBox="0 0 24 24" class="icono-plegar h-4 w-4 shrink-0 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <button id="btn-agenda-actualizar" type="button" class="control ml-auto !px-2 !py-1 text-xs" title="Actualizar agenda y marcadores">
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
+            <span class="sr-only">Actualizar agenda</span>
+          </button>
+        </div>
+        <div id="agenda-cuerpo">
+          <ul id="agenda-hoy" class="agenda-partidos mt-2.5" aria-label="Partidos de hoy"></ul>
+          <details id="agenda-proximos-caja" class="mt-2 text-xs text-slate-400" hidden>
+            <summary class="cursor-pointer select-none hover:text-slate-200">Próximos partidos <span id="agenda-cuenta-proximos" class="tabular-nums text-slate-500"></span></summary>
+            <ul id="agenda-proximos" class="mt-2 grid gap-1 sm:grid-cols-2 xl:grid-cols-3"></ul>
+          </details>
+          <p id="agenda-nota" class="mt-2 text-[11px] text-slate-500"></p>
+        </div>
+      </section>
+    </div>
+
+    <details id="mas-fuentes" class="caja-plegable mt-4">
+      <summary>Cargar lista M3U personalizada y herramientas avanzadas</summary>
+      <section class="mt-3" aria-label="Fuentes de canales personalizadas">
+        <form id="form-lista" class="carga-lista" novalidate>
+          <label for="input-lista" class="sr-only">URL de la lista M3U</label>
+          <div class="relative min-w-0 basis-full sm:flex-1 sm:basis-auto">
+            <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+            <input id="input-lista" type="url" inputmode="url" autocomplete="url" spellcheck="false"
+              placeholder="Pega la URL de una lista M3U · ej. https://dearbulut.github.io/iptv/playlists/online.m3u"
+              class="w-full rounded-xl border border-linea bg-fondo py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-cancha/60 focus:outline-none focus:ring-2 focus:ring-cancha/20" />
+          </div>
+          <button id="btn-cargar" type="submit" class="btn-primario flex-1 sm:flex-none">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-4-4m4 4 4-4M4 20h16"/></svg>
+            Cargar lista
+          </button>
+          <button id="btn-defecto" type="button" class="btn-secundario flex-1 sm:flex-none">Lista por defecto</button>
+          <button id="btn-guardar-lista" type="button" class="btn-secundario" aria-pressed="false" title="Guardar esta lista en Mis listas" disabled>
+            <svg viewBox="0 0 24 24" class="icono-estrella h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>
+            <span id="texto-guardar-lista">Guardar</span>
+          </button>
+          <button id="btn-analizador" type="button" class="btn-secundario" title="Analizador técnico de páginas deportivas">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+            Analizador
+          </button>
+          <label for="sel-preset" class="sr-only">Más listas públicas</label>
+          <select id="sel-preset" class="control w-full sm:w-auto"><option value="">Más listas…</option></select>
+        </form>
+        <div id="mis-listas" class="mt-2 flex flex-wrap items-center gap-1.5 border-t border-linea px-1 pt-2 text-xs text-slate-500"></div>
+      </section>
+      <section id="tnt-catalogo" class="mb-3 mt-3 border-y border-cancha/40 py-3" aria-labelledby="titulo-tnt">
+        <h2 id="titulo-tnt" class="font-display text-xl font-bold text-white">TNT SPORTS PREMIUM</h2>
+        <p class="text-xs text-slate-400">Chile y Argentina | Fuentes configuradas</p>
+        <p id="tnt-partido" class="mt-2 text-xs text-slate-400">Sin anuncio oficial reciente disponible.</p>
+        <div id="tnt-canales" class="mt-3 space-y-3"></div>
+      </section>
+    </details>
+  </main>
+
+  <!-- ================= PANEL ADMIN CRUD (TELÉFONOS AUTORIZADOS) ================= -->
+  <dialog id="dialogo-admin" class="m-auto p-0 text-slate-200 shadow-2xl" aria-labelledby="titulo-admin-modal">
+    <div class="p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-4 border-b border-linea pb-4">
+        <div class="flex items-center gap-3">
+          <img src="./logo/gambeta-auriverde-01.svg" alt="Gambeta Auriverde" class="h-11 w-11 object-contain" />
+          <div>
+            <h2 id="titulo-admin-modal" class="font-display text-2xl font-bold uppercase tracking-wide text-white">
+              Panel de Miembros <span class="text-auriverde-oro">· CRUD</span>
+            </h2>
+            <p class="text-xs text-slate-400">Gestiona los números de teléfono de tus amigos (su número es su contraseña).</p>
+          </div>
+        </div>
+        <button id="btn-cerrar-admin" type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-sup-2 hover:text-white" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <!-- PASO 1: Ingresar PIN Maestro -->
+      <div id="admin-vista-pin" class="py-6">
+        <form id="form-admin-pin" class="mx-auto max-w-sm text-center" autocomplete="off">
+          <p class="text-sm font-semibold text-white">Ingresa el PIN de Administrador</p>
+          <p class="mt-1 text-xs text-slate-400">Acceso exclusivo para gestionar la lista de amigos autorizados.</p>
+          <input
+            id="admin-input-pin"
+            type="password"
+            placeholder="••••"
+            class="acceso-input mt-3"
+            required
+          />
+          <p id="admin-error-pin" class="mt-2 text-xs font-semibold text-vivo" hidden></p>
+          <button type="submit" class="acceso-btn mt-3">Desbloquear Panel CRUD</button>
+        </form>
+      </div>
+
+      <!-- PASO 2: Panel CRUD Completo -->
+      <div id="admin-vista-crud" hidden>
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+          <span id="admin-modo-almacenamiento">🟢 Guardado en Servidor (data/usuarios.json)</span>
+          <div class="flex flex-wrap gap-2">
+            <button id="admin-btn-exportar" type="button" class="control !px-2.5 !py-1 text-xs">📥 Exportar JSON</button>
+            <label class="control !px-2.5 !py-1 text-xs cursor-pointer">
+              📤 Importar JSON
+              <input id="admin-input-importar" type="file" accept=".json,application/json" class="sr-only" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="admin-stats">
+          <div class="admin-stat-card">
+            <div id="admin-stat-total" class="admin-stat-valor">0</div>
+            <div class="admin-stat-label">Total Amigos</div>
+          </div>
+          <div class="admin-stat-card">
+            <div id="admin-stat-activos" class="admin-stat-valor text-cancha">0</div>
+            <div class="admin-stat-label">Con Acceso Activo</div>
+          </div>
+          <div class="admin-stat-card">
+            <div id="admin-stat-pausados" class="admin-stat-valor text-amber-400">0</div>
+            <div class="admin-stat-label">Pausados</div>
+          </div>
+        </div>
+
+        <!-- Formulario Agregar / Editar -->
+        <form id="form-admin-usuario" class="admin-form-box" autocomplete="off">
+          <div class="flex items-center justify-between">
+            <h3 id="admin-form-titulo" class="text-sm font-bold text-auriverde-oro">➕ Agregar nuevo amigo autorizado</h3>
+            <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-300">
+              <input id="admin-input-activo" type="checkbox" checked class="h-4 w-4 rounded accent-cancha" />
+              Acceso habilitado
+            </label>
+          </div>
+
+          <div class="mt-3 grid gap-2.5 sm:grid-cols-3">
+            <div>
+              <label for="admin-input-nombre" class="block text-[11px] font-semibold uppercase text-slate-400">Nombre / Apodo *</label>
+              <input id="admin-input-nombre" type="text" maxlength="50" placeholder="Ej. Pipe, Juancho..." required
+                class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+            </div>
+            <div>
+              <label for="admin-input-telefono" class="block text-[11px] font-semibold uppercase text-slate-400">Teléfono (Contraseña) *</label>
+              <input id="admin-input-telefono" type="tel" inputmode="tel" maxlength="20" placeholder="Ej. 3026444564" required
+                class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 font-mono text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+            </div>
+            <div>
+              <label for="admin-input-nota" class="block text-[11px] font-semibold uppercase text-slate-400">Nota / Grupo (opcional)</label>
+              <input id="admin-input-nota" type="text" maxlength="60" placeholder="Ej. Parche Fútbol"
+                class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+            </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <button id="admin-btn-guardar" type="submit" class="btn-primario !py-2 text-xs">
+              + Agregar amigo
+            </button>
+            <button id="admin-btn-cancelar-edicion" type="button" class="btn-secundario !py-2 text-xs" hidden>
+              Cancelar edición
+            </button>
+          </div>
+        </form>
+
+        <div id="admin-feedback" role="status" hidden></div>
+
+        <!-- Buscador de amigos -->
+        <div class="mt-4 flex items-center justify-between gap-2">
+          <input id="admin-buscar" type="search" placeholder="Buscar amigo por nombre, teléfono o nota…"
+            class="w-full rounded-xl border border-linea bg-fondo px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:border-cancha/60 focus:outline-none" />
+        </div>
+
+        <!-- Lista de usuarios -->
+        <div id="admin-lista-usuarios" class="admin-lista-scroll scroll-fino"></div>
+
+        <!-- Cambiar PIN Maestro -->
+        <details class="mt-4 border-t border-linea pt-3 text-xs text-slate-400">
+          <summary class="cursor-pointer font-semibold hover:text-white">Cambiar PIN Maestro de Administrador</summary>
+          <form id="form-admin-cambiar-pin" class="mt-2 flex flex-wrap gap-2" autocomplete="off">
+            <input id="admin-input-nuevo-pin" type="password" placeholder="Nuevo PIN (mínimo 4 caracteres)"
+              class="min-w-0 flex-1 rounded-lg border border-linea bg-fondo px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none" />
+            <button type="submit" class="control text-xs">Actualizar PIN</button>
+          </form>
+        </details>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ================= ATAJOS DE TECLADO ================= -->
+  <dialog id="dialogo-atajos" class="m-auto w-[min(92vw,440px)] rounded-2xl border border-linea bg-sup p-0 text-slate-200 shadow-2xl" aria-labelledby="titulo-atajos">
+    <div class="p-5">
+      <div class="flex items-center justify-between">
+        <h2 id="titulo-atajos" class="font-display text-2xl font-bold text-white">Control remoto</h2>
+        <button id="btn-cerrar-atajos" type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-sup-2 hover:text-white" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <p class="mt-1 text-sm text-slate-400">Funcionan mientras no estés escribiendo en un campo.</p>
+      <dl class="mt-4 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2.5 text-sm">
+        <dt><kbd class="tecla">↓</kbd> <kbd class="tecla">↑</kbd></dt><dd>Canal siguiente / anterior</dd>
+        <dt><kbd class="tecla">Espacio</kbd></dt><dd>Pausar / reproducir</dd>
+        <dt><kbd class="tecla">F</kbd></dt><dd>Pantalla completa</dd>
+        <dt><kbd class="tecla">P</kbd></dt><dd>Ventana flotante (Picture-in-Picture)</dd>
+        <dt><kbd class="tecla">M</kbd></dt><dd>Silenciar / activar sonido</dd>
+        <dt><kbd class="tecla">S</kbd></dt><dd>Agregar / quitar de favoritos</dd>
+        <dt><kbd class="tecla">G</kbd></dt><dd>Guía de programación (EPG)</dd>
+        <dt><kbd class="tecla">0</kbd>–<kbd class="tecla">9</kbd></dt><dd>Ir al canal por número</dd>
+        <dt><kbd class="tecla">/</kbd></dt><dd>Buscar (<kbd class="tecla">Esc</kbd> para salir del buscador)</dd>
+        <dt><kbd class="tecla">?</kbd></dt><dd>Mostrar esta ayuda</dd>
+      </dl>
+    </div>
+  </dialog>
+
+  <!-- ================= GUÍA DE PROGRAMACIÓN (EPG) ================= -->
+  <dialog id="dialogo-epg" class="m-auto w-[min(94vw,600px)] rounded-2xl border border-linea bg-sup p-0 text-slate-200 shadow-2xl" aria-labelledby="titulo-epg">
+    <div class="p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 id="titulo-epg" class="font-display text-2xl font-bold text-white">Guía de programación</h2>
+          <p class="mt-0.5 text-sm text-slate-400">Fuentes XMLTV (<b class="text-slate-200">.xml</b> o <b class="text-slate-200">.xml.gz</b>). Cada canal se enlaza por su <code class="text-cancha">tvg-id</code> y, si no coincide, por nombre.</p>
+        </div>
+        <button id="btn-cerrar-epg" type="button" class="-mr-1 -mt-1 rounded-lg p-1.5 text-slate-400 hover:bg-sup-2 hover:text-white" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <p id="epg-resumen" class="mt-3 rounded-lg bg-fondo px-3 py-2 text-xs text-slate-400"></p>
+      <ul id="epg-fuentes" class="mt-3 space-y-2"></ul>
+
+      <form id="form-epg" class="mt-4 flex gap-2" novalidate>
+        <label for="input-epg" class="sr-only">URL de la guía XMLTV</label>
+        <input id="input-epg" type="url" inputmode="url" spellcheck="false" placeholder="https://dearbulut.github.io/iptv/epg/guide.xml.gz"
+          class="min-w-0 flex-1 rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none focus:ring-2 focus:ring-cancha/20" />
+        <button type="submit" class="btn-primario !py-2">Agregar</button>
+      </form>
+
+      <label id="zona-epg-archivo" class="mt-3 flex cursor-pointer flex-col items-center gap-1 rounded-xl border border-dashed border-linea p-4 text-center transition hover:border-cancha/50">
+        <span class="text-sm font-medium text-slate-200">Cargar archivo de guía (.xml / .xml.gz)</span>
+        <span class="text-xs text-slate-500">Elegir o arrastrar aquí · se procesa en tu navegador</span>
+        <input id="input-epg-archivo" type="file" accept=".xml,.gz,.xmltv,application/xml,text/xml,application/gzip" class="sr-only" />
+      </label>
+
+      <details class="mt-3 text-xs text-slate-400">
+        <summary class="cursor-pointer select-none hover:text-slate-200">Proxy CORS (opcional)</summary>
+        <p class="mt-2">Para servidores de guías que no permiten lectura desde navegadores. Usa <code class="text-cancha">{url}</code> donde va la dirección de la guía; sin <code class="text-cancha">{url}</code>, se agrega al final.</p>
+        <div class="mt-2 flex gap-2">
+          <input id="input-proxy" type="url" spellcheck="false" placeholder="https://mi-proxy.workers.dev/?url={url}"
+            class="min-w-0 flex-1 rounded-lg border border-linea bg-fondo px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+          <button id="btn-guardar-proxy" type="button" class="control">Guardar</button>
+        </div>
+      </details>
+    </div>
+  </dialog>
+
+  <!-- ================= ANALIZADOR DE PAGINAS DEPORTIVAS ================= -->
+  <dialog id="dialogo-analizador" class="m-auto w-[min(96vw,980px)] rounded-2xl border border-linea bg-sup p-0 text-slate-200 shadow-2xl" aria-labelledby="titulo-analizador">
+    <div class="p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 id="titulo-analizador" class="font-display text-2xl font-bold text-white">Analizador deportivo</h2>
+          <p class="mt-0.5 max-w-3xl text-sm text-slate-400">Analiza HTML público o una URL accesible por CORS. No sigue iframes, no usa proxies y no extrae señales protegidas.</p>
+        </div>
+        <button id="btn-cerrar-analizador" type="button" class="-mr-1 -mt-1 rounded-lg p-1.5 text-slate-400 hover:bg-sup-2 hover:text-white" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-analizador-url" class="mt-4 flex flex-col gap-2 sm:flex-row" novalidate>
+        <label for="input-analizador-url" class="sr-only">URL pública</label>
+        <input id="input-analizador-url" type="url" inputmode="url" spellcheck="false" placeholder="https://sitio.example/evento"
+          class="min-w-0 flex-1 rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none focus:ring-2 focus:ring-cancha/20" />
+        <button id="btn-analizar-url" type="submit" class="btn-primario !py-2">Analizar URL</button>
+      </form>
+
+      <form id="form-analizador-html" class="mt-3" novalidate>
+        <label for="input-analizador-html" class="sr-only">HTML de la página</label>
+        <textarea id="input-analizador-html" rows="7" spellcheck="false" placeholder="Pega aquí el HTML público de una página de evento o reproductor..."
+          class="scroll-fino w-full resize-y rounded-xl border border-linea bg-fondo px-3 py-2 font-mono text-xs text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none focus:ring-2 focus:ring-cancha/20"></textarea>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <button type="submit" class="btn-primario !py-2">Analizar HTML</button>
+          <button id="btn-limpiar-analizador" type="button" class="btn-secundario !py-2">Limpiar</button>
+          <button id="btn-exportar-analizador" type="button" class="btn-secundario !py-2" disabled>Exportar JSON</button>
+          <span id="estado-analizador" class="min-w-0 flex-1 text-xs text-slate-500" role="status"></span>
+        </div>
+      </form>
+
+      <div id="resumen-analizador" class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4" hidden></div>
+      <div id="tabla-analizador" class="scroll-fino mt-4 max-h-[42vh] overflow-auto rounded-xl border border-linea" hidden></div>
+    </div>
+  </dialog>
+
+  <footer class="mx-auto max-w-[1600px] px-4 pb-8 pt-6 text-center text-xs text-slate-500">
+    <div class="flex flex-wrap items-center justify-center gap-2">
+      <img src="./logo/gambeta-auriverde-02.svg" alt="" class="h-4 w-4 opacity-70" />
+      <span class="font-semibold text-slate-400">Gambeta Auriverde TV</span>
+      <span>· Club Privado · Señales verificadas, La18HD y catálogo IPTV Nexus</span>
+    </div>
+    <button id="btn-privacidad" type="button" class="hidden" hidden>Privacidad</button>
+  </footer>
+
+  <script src="./js/parser.js?v=gambeta3"></script>
+  <script src="./js/player.js?v=gambeta3"></script>
+  <script src="./js/tnt-fuentes.js?v=gambeta3"></script>
+  <script src="./js/verificador.js?v=gambeta3"></script>
+  <script src="./js/estados-canales.js?v=gambeta3"></script>
+  <script src="./js/epg.js?v=gambeta3"></script>
+  <script src="./js/agenda.js?v=gambeta3"></script>
+  <script src="./js/analizador.js?v=gambeta3"></script>
+  <script src="./js/analitica.js?v=gambeta3"></script>
+  <script src="./js/servidores.js?v=gambeta3"></script>
+  <script src="./js/chat.js?v=gambeta3"></script>
+  <script src="./js/app.js?v=gambeta3"></script>
+  <script src="./js/acceso.js?v=gambeta3"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "canales": [
+    {
+      "id": "tnt-cl",
+      "canal": "TNT Sports Premium Chile",
+      "pais": "Chile",
+      "proveedorOficial": "Warner Bros. Discovery / TNT Sports Chile",
+      "plataformaVisualizacion": "Estadio TNT Sports y Max/HBO Max segun suscripcion u operador",
+      "plataformaOficial": "https://tntsports.cl/site/programacion-tntsports-premium/",
+      "reproductorEmbebibleAutorizado": false,
+      "sdkApiDocumentada": false,
+      "formatosPublicados": [],
+      "restriccionesIntegracion": "Contenido premium con registro, suscripcion activa y restricciones territoriales. No hay HLS/DASH publico ni iframe oficial documentado para integrar en GolStream.",
+      "fuentes": [
+        { "id": "principal", "nombre": "Principal", "url": null, "autorizada": false, "verificada": false, "evidenciaAutorizacion": null, "ultimaVerificacion": null, "motivoFallo": "Sin fuente integrable autorizada publicada." },
+        { "id": "alternativa-2", "nombre": "Alternativa 2", "url": null, "autorizada": false, "verificada": false, "evidenciaAutorizacion": null, "ultimaVerificacion": null, "motivoFallo": "Sin fuente integrable autorizada publicada." },
+        { "id": "alternativa-3", "nombre": "Alternativa 3", "url": null, "autorizada": false, "verificada": false, "evidenciaAutorizacion": null, "ultimaVerificacion": null, "motivoFallo": "Sin fuente integrable autorizada publicada." }
+      ]
+    },
+    {
+      "id": "tnt-ar",
+      "canal": "TNT Sports Premium Argentina",
+      "pais": "Argentina",
+      "proveedorOficial": "Warner Bros. Discovery / TNT Sports Argentina",
+      "plataformaVisualizacion": "TNT Sports Premium en TV paga y TNT Sports en Max para usuarios habilitados por operador",
+      "plataformaOficial": "https://tntsports.com.ar/",
+      "reproductorEmbebibleAutorizado": false,
+      "sdkApiDocumentada": false,
+      "formatosPublicados": [],
+      "restriccionesIntegracion": "Contenido premium/Pack Futbol. No hay HLS/DASH publico ni iframe oficial documentado para integrar en GolStream.",
+      "fuentes": [
+        { "id": "principal", "nombre": "Principal", "url": null, "autorizada": false, "verificada": false, "evidenciaAutorizacion": null, "ultimaVerificacion": null, "motivoFallo": "Sin fuente integrable autorizada publicada." },
+        { "id": "alternativa-2", "nombre": "Alternativa 2", "url": null, "autorizada": false, "verificada": false, "evidenciaAutorizacion": null, "ultimaVerificacion": null, "motivoFallo": "Sin fuente integrable autorizada publicada." },
+        { "id": "alternativa-3", "nombre": "Alternativa 3", "url": null, "autorizada": false, "verificada": false, "evidenciaAutorizacion": null, "ultimaVerificacion": null, "motivoFallo": "Sin fuente integrable autorizada publicada." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "adminPin": "0418",
+  "actualizado": "2026-10-19T20:47:23.883Z",
+  "usuarios": [
+    {
+      "id": "usr-stiven-admin",
+      "nombre": "Stiven",
+      "telefono": "3026444564",
+      "nota": "Administrador · Gambeta Auriverde",
+      "activo": true,
+      "creado": "2026-10-19T15:30:00.000Z",
+      "ultimoAcceso": "2026-10-19T20:47:23.882Z"
+    }
+  ]
+}

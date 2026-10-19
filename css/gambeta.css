@@ -1,0 +1,990 @@
+/* =============================================================
+   Gambeta Auriverde TV · css/gambeta.css
+   Paleta Oficial:
+   - Amarillo : #FDD003 (Identidad y detalles)
+   - Verde    : #027F31 (Color institucional)
+   - Rojo     : #FE0000 (Contraste y acentos)
+   - Negro    : #000000 (Textos, escudo y contornos)
+   - Blanco   : #FFFFFF (Fondo y espacios negativos)
+   Bordes de botones y secciones: máximo 3px
+   Soporte Modo Oscuro y Modo Claro intercambiables
+   ============================================================= */
+
+:root,
+html[data-tema="oscuro"] {
+  --gambeta-amarillo: #FDD003;
+  --gambeta-verde: #027F31;
+  --gambeta-rojo: #FE0000;
+  --gambeta-negro: #000000;
+  --gambeta-blanco: #FFFFFF;
+
+  --tema-fondo: #000000;
+  --tema-sup: #090d0a;
+  --tema-sup-2: #111813;
+  --tema-sup-3: #18221b;
+  --tema-texto: #FFFFFF;
+  --tema-texto-sec: #cbd5e1;
+  --tema-texto-muted: #94a3b8;
+  --tema-borde: rgba(255, 255, 255, 0.16);
+  --tema-borde-fuerte: #FDD003;
+  --tema-sombra: 0 8px 24px rgba(0, 0, 0, 0.65);
+}
+
+html[data-tema="claro"] {
+  --gambeta-amarillo: #FDD003;
+  --gambeta-verde: #027F31;
+  --gambeta-rojo: #FE0000;
+  --gambeta-negro: #000000;
+  --gambeta-blanco: #FFFFFF;
+
+  --tema-fondo: #FFFFFF;
+  --tema-sup: #F7F9F7;
+  --tema-sup-2: #EDF2EE;
+  --tema-sup-3: #E2EAE4;
+  --tema-texto: #000000;
+  --tema-texto-sec: #111827;
+  --tema-texto-muted: #374151;
+  --tema-borde: #000000;
+  --tema-borde-fuerte: #027F31;
+  --tema-sombra: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+/* ==================== BORDES REDONDEADOS (MÁXIMO 5PX) ==================== */
+*,
+*::before,
+*::after,
+button,
+input,
+select,
+textarea,
+dialog,
+details,
+summary,
+section,
+aside,
+div,
+span,
+a,
+.pestana,
+.chip,
+.control,
+.accion,
+.accion-sonido,
+.btn-primario,
+.btn-secundario,
+.btn-cabecera,
+.canal,
+.canal-logo,
+.contenedor-video,
+.barra-ahora,
+.barra-listas-top,
+.caja-plegable,
+.tarjeta-acceso,
+.acceso-logo-wrap,
+.acceso-insignia,
+.acceso-input,
+.acceso-btn,
+.badge-miembro,
+.la18hd-card,
+.la18hd-tab,
+.admin-stat-card,
+.admin-form-box,
+.admin-item-usuario,
+.admin-btn-accion,
+.admin-badge-estado {
+  border-radius: 5px !important;
+}
+
+/* ==================== ESTILOS GENERALES DE TEMA ==================== */
+body {
+  background-color: var(--tema-fondo) !important;
+  color: var(--tema-texto) !important;
+  background-image: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+body.bloqueado-acceso {
+  overflow: hidden !important;
+}
+
+.text-auriverde-oro {
+  color: var(--gambeta-amarillo) !important;
+}
+
+.text-auriverde-verde {
+  color: var(--gambeta-verde) !important;
+}
+
+.text-auriverde-rojo {
+  color: var(--gambeta-rojo) !important;
+}
+
+/* Ajustes automáticos para Modo Claro sobre clases de app.css */
+html[data-tema="claro"] .bg-fondo,
+html[data-tema="claro"] .bg-fondo\/95 {
+  background-color: #FFFFFF !important;
+}
+
+html[data-tema="claro"] .bg-sup,
+html[data-tema="claro"] .panel-canales,
+html[data-tema="claro"] .caja-plegable,
+html[data-tema="claro"] #agenda,
+html[data-tema="claro"] .senales,
+html[data-tema="claro"] dialog {
+  background-color: var(--tema-sup) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+html[data-tema="claro"] .text-white,
+html[data-tema="claro"] .text-slate-200,
+html[data-tema="claro"] .text-slate-300,
+html[data-tema="claro"] .ahora-titulo,
+html[data-tema="claro"] .canal-nombre,
+html[data-tema="claro"] .titulo-seccion,
+html[data-tema="claro"] .senales-titulo {
+  color: #000000 !important;
+}
+
+html[data-tema="claro"] .text-slate-400,
+html[data-tema="claro"] .text-slate-500,
+html[data-tema="claro"] .ahora-meta,
+html[data-tema="claro"] .canal-grupo {
+  color: #1f2937 !important;
+}
+
+html[data-tema="claro"] input,
+html[data-tema="claro"] select,
+html[data-tema="claro"] textarea {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+}
+
+html[data-tema="claro"] .canal {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
+  color: #000000 !important;
+}
+
+html[data-tema="claro"] .canal:hover {
+  border-color: #027F31 !important;
+  background-color: rgba(2, 127, 49, 0.06) !important;
+}
+
+html[data-tema="claro"] .canal.activo {
+  background-color: rgba(253, 208, 3, 0.28) !important;
+  border: 1.5px solid #000000 !important;
+}
+
+html[data-tema="claro"] .control,
+html[data-tema="claro"] .btn-secundario,
+html[data-tema="claro"] .accion {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+}
+
+html[data-tema="claro"] .control:hover,
+html[data-tema="claro"] .btn-secundario:hover,
+html[data-tema="claro"] .accion:hover {
+  background-color: #FDD003 !important;
+  color: #000000 !important;
+}
+
+/* ==================== CABECERA PRINCIPAL (LOGO NORMAL) ==================== */
+.cabecera {
+  background: var(--tema-sup) !important;
+  border-bottom: 2px solid var(--gambeta-verde) !important;
+  box-shadow: var(--tema-sombra);
+}
+
+html[data-tema="claro"] .cabecera {
+  background: #FFFFFF !important;
+  border-bottom: 2px solid #000000 !important;
+}
+
+.cabecera-interior {
+  max-width: 1640px !important;
+  min-height: 3.35rem !important;
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+  gap: 0.65rem !important;
+}
+
+.marca-gambeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.marca-escudo {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+.marca-textos {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.marca-titulo {
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--tema-texto);
+  text-transform: uppercase;
+}
+
+.marca-titulo span {
+  color: var(--gambeta-amarillo);
+}
+
+html[data-tema="claro"] .marca-titulo span {
+  color: var(--gambeta-verde);
+}
+
+.marca-subtitulo {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tema-texto-muted);
+  margin-top: 2px;
+}
+
+.cabecera-acciones {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.badge-miembro {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  background: rgba(2, 127, 49, 0.15);
+  border: 1px solid var(--gambeta-verde);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tema-texto);
+}
+
+.badge-miembro-punto {
+  width: 0.45rem;
+  height: 0.45rem;
+  background: var(--gambeta-verde);
+}
+
+.btn-cabecera {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1.5px solid var(--tema-borde);
+  background: var(--tema-sup-2);
+  color: var(--tema-texto);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-cabecera:hover {
+  border-color: var(--gambeta-amarillo);
+  background: var(--gambeta-amarillo);
+  color: #000000 !important;
+}
+
+.btn-cabecera-admin {
+  background: var(--gambeta-amarillo);
+  color: #000000 !important;
+  border: 1.5px solid #000000;
+}
+
+.btn-cabecera-admin:hover {
+  background: var(--gambeta-verde);
+  color: #FFFFFF !important;
+  border-color: #000000;
+}
+
+.btn-cabecera-salir {
+  border-color: var(--gambeta-rojo);
+  color: #FFFFFF;
+  background: var(--gambeta-rojo);
+}
+
+.btn-cabecera-salir:hover {
+  background: #c50000;
+  color: #FFFFFF !important;
+}
+
+@media (max-width: 640px) {
+  .badge-miembro,
+  #info-lista {
+    display: none;
+  }
+}
+
+/* ==================== BARRA SUPERIOR Y FILTROS COMPACTOS Y COLAPSABLES ==================== */
+details.barra-listas-top {
+  margin-bottom: 0.65rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--tema-sup);
+  border: 1.5px solid var(--tema-borde);
+}
+
+details.barra-listas-top > summary {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+details.barra-listas-top > summary::-webkit-details-marker {
+  display: none;
+}
+
+.barra-listas-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tema-texto);
+}
+
+.indicador-colapso {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  font-weight: 800;
+  border: 1px solid #000000;
+}
+
+/* Hace la lista de países y pestañas de 1 sola línea con "+ Más países y listas" a la derecha */
+.navegacion-listas {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.categorias-principales {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  width: 100% !important;
+}
+
+.categorias-principales .pestana,
+.categorias-secundarias .pestana {
+  min-height: 1.75rem !important;
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  border: 1px solid var(--tema-borde) !important;
+  background: var(--tema-sup-2) !important;
+  color: var(--tema-texto) !important;
+  width: auto !important;
+}
+
+.btn-mas-paises-derecha {
+  margin-left: auto !important;
+  min-height: 1.75rem !important;
+  padding: 0.2rem 0.65rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  color: var(--gambeta-verde);
+  background: rgba(2, 127, 49, 0.12);
+  border: 1px solid var(--gambeta-verde);
+}
+
+html[data-tema="oscuro"] .btn-mas-paises-derecha {
+  color: var(--gambeta-amarillo);
+  border-color: var(--gambeta-amarillo);
+  background: rgba(253, 208, 3, 0.1);
+}
+
+.btn-mas-paises-derecha:hover {
+  background: var(--gambeta-amarillo) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.pestana-icono {
+  display: none !important;
+}
+
+.pestana-subtexto {
+  font-size: 0.62rem !important;
+  opacity: 0.75 !important;
+  margin-left: 0.15rem !important;
+}
+
+.pestana[aria-selected="true"] {
+  background: var(--gambeta-amarillo) !important;
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+  font-weight: 800 !important;
+}
+
+.categorias-secundarias {
+  margin-top: 0.2rem !important;
+  padding-top: 0.3rem !important;
+  border-top: 1px dashed var(--tema-borde);
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.25rem !important;
+}
+
+.categorias-secundarias[hidden] {
+  display: none !important;
+}
+
+/* ==================== BUSCADOR Y FILTROS DE CANALES COMPACTOS ==================== */
+.buscador-caja {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.buscador-caja .buscador-icono {
+  position: absolute !important;
+  left: 0.85rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  pointer-events: none !important;
+}
+
+.buscador-caja #buscador {
+  width: 100% !important;
+  padding-left: 2.5rem !important;
+  padding-right: 2.25rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  font-size: 0.8rem !important;
+}
+
+.buscador-caja .buscador-tecla {
+  position: absolute !important;
+  right: 0.75rem !important;
+  left: auto !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  pointer-events: none !important;
+}
+
+details.filtros-categorias-caja {
+  margin-top: 0.35rem;
+  border: 1px solid var(--tema-borde);
+  background: var(--tema-sup-2);
+  padding: 0.25rem 0.45rem;
+}
+
+details.filtros-categorias-caja > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tema-texto);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+details.filtros-categorias-caja > summary::-webkit-details-marker {
+  display: none;
+}
+
+#chips.filtros-contenido {
+  margin-top: 0.3rem;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.25rem !important;
+  padding-bottom: 0.1rem !important;
+}
+
+.chip {
+  padding: 0.18rem 0.5rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  min-height: 1.55rem !important;
+  border: 1px solid var(--tema-borde) !important;
+  background: var(--tema-sup) !important;
+  color: var(--tema-texto) !important;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--gambeta-verde) !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+/* ==================== REPRODUCTOR E IFRAME LA18HD ==================== */
+.contenedor-video {
+  position: relative;
+  border: 2px solid var(--gambeta-verde) !important;
+  background: #000000 !important;
+}
+
+.iframe-reproductor-externo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  z-index: 15;
+  background: #000000;
+}
+
+.iframe-reproductor-externo[hidden] {
+  display: none !important;
+}
+
+.barra-iframe-externo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  border: 1.5px solid #000000;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.barra-iframe-externo[hidden] {
+  display: none !important;
+}
+
+.barra-ahora {
+  padding: 0.5rem 0.75rem !important;
+  background: var(--tema-sup) !important;
+  border: 1.5px solid var(--tema-borde) !important;
+}
+
+/* ==================== SECCIÓN SEÑALES LA18HD ==================== */
+.caja-la18hd {
+  margin-top: 0.55rem;
+  border: 1.5px solid var(--gambeta-verde) !important;
+  background: var(--tema-sup) !important;
+  padding: 0.45rem 0.65rem !important;
+}
+
+.caja-la18hd > summary {
+  cursor: pointer;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--tema-texto);
+}
+
+.la18hd-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+}
+
+.la18hd-tab {
+  padding: 0.18rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  border: 1px solid var(--tema-borde);
+  background: var(--tema-sup-2);
+  color: var(--tema-texto);
+  cursor: pointer;
+}
+
+.la18hd-tab.is-active {
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  border-color: #000000;
+}
+
+.la18hd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  max-height: 175px;
+  overflow-y: auto;
+}
+
+.la18hd-card {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  border: 1px solid var(--tema-borde);
+  background: var(--tema-sup-2);
+  color: var(--tema-texto);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.la18hd-card:hover {
+  border-color: var(--gambeta-verde);
+  background: var(--gambeta-amarillo);
+  color: #000000 !important;
+}
+
+.la18hd-card.is-playing {
+  background: var(--gambeta-verde);
+  color: #FFFFFF !important;
+  border-color: #000000;
+}
+
+.la18hd-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex-shrink: 0;
+  background: var(--gambeta-verde);
+}
+
+.la18hd-dot.is-off {
+  background: var(--gambeta-rojo);
+}
+
+.la18hd-card-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.la18hd-card-nombre {
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.la18hd-card-cat {
+  font-size: 0.6rem;
+  opacity: 0.8;
+}
+
+/* ==================== SEÑALES RÁPIDAS ==================== */
+.senales {
+  padding: 0.45rem 0.65rem !important;
+  margin-top: 0.5rem !important;
+}
+
+.partido-senales button {
+  padding: 0.35rem 0.55rem !important;
+  min-height: 2.2rem !important;
+}
+
+.partido-senales button[aria-pressed="true"] {
+  border: 1.5px solid #000000 !important;
+  background: var(--gambeta-amarillo) !important;
+  color: #000000 !important;
+}
+
+.partido-senales button[aria-pressed="true"] b,
+.partido-senales button[aria-pressed="true"] span,
+.partido-senales button[aria-pressed="true"] small {
+  color: #000000 !important;
+}
+
+/* ==================== BOTONES PRIMARIOS Y ACCIONES ==================== */
+.btn-primario {
+  background: var(--gambeta-verde) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #000000 !important;
+  font-weight: 800 !important;
+}
+
+.btn-primario:hover {
+  background: var(--gambeta-amarillo) !important;
+  color: #000000 !important;
+}
+
+.accion-sonido {
+  background: var(--gambeta-rojo) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #000000 !important;
+}
+
+/* ==================== PANTALLA DE LOGIN POR TELÉFONO ==================== */
+.pantalla-acceso {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background:
+     linear-gradient(135deg, rgba(2, 127, 49, 0.25) 0%, rgba(0, 0, 0, 0.95) 60%, rgba(253, 208, 3, 0.18) 100%);
+  backdrop-filter: blur(14px);
+}
+
+.pantalla-acceso[hidden] {
+  display: none !important;
+}
+
+.tarjeta-acceso {
+  width: min(94vw, 410px);
+  padding: 1.75rem 1.5rem;
+  background: #000000;
+  color: #FFFFFF;
+  border: 2px solid var(--gambeta-amarillo);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+  text-align: center;
+}
+
+/* Logo gambeta-auriverde-dark con fondo blanco (#FFFFFF) como pidió el usuario */
+.acceso-logo-wrap {
+  display: inline-grid;
+  place-items: center;
+  width: 7.5rem;
+  height: 7.5rem;
+  margin-bottom: 0.85rem;
+  background: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 0 0 0 2px var(--gambeta-amarillo);
+  padding: 0.45rem;
+}
+
+.acceso-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.acceso-insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--gambeta-verde);
+  border: 1px solid #FFFFFF;
+  color: #FFFFFF;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.acceso-titulo {
+  margin-top: 0.55rem;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #FFFFFF;
+  text-transform: uppercase;
+}
+
+.acceso-input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid #FFFFFF !important;
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+.acceso-input:focus {
+  outline: none;
+  border-color: var(--gambeta-amarillo) !important;
+}
+
+.acceso-btn {
+  width: 100%;
+  margin-top: 0.65rem;
+  padding: 0.8rem 1.1rem;
+  border: 2px solid #000000;
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  font-size: 0.92rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.acceso-btn:hover {
+  background: var(--gambeta-verde);
+  color: #FFFFFF;
+  border-color: #FFFFFF;
+}
+
+/* ==================== MODAL ADMIN CRUD ==================== */
+#dialogo-admin {
+  width: min(96vw, 760px);
+  max-height: 90vh;
+  border: 2px solid var(--gambeta-amarillo);
+  background: var(--tema-sup);
+  color: var(--tema-texto);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85);
+}
+
+#dialogo-admin::backdrop {
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.admin-stat-card {
+  padding: 0.55rem 0.75rem;
+  background: var(--tema-sup-2);
+  border: 1px solid var(--tema-borde);
+}
+
+.admin-stat-valor {
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.admin-stat-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--tema-texto-muted);
+}
+
+.admin-form-box {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  background: var(--tema-sup-2);
+  border: 1.5px solid var(--gambeta-verde);
+}
+
+.admin-lista-scroll {
+  max-height: 36vh;
+  overflow-y: auto;
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.admin-item-usuario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--tema-sup-2);
+  border: 1px solid var(--tema-borde);
+}
+
+.admin-badge-estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.admin-badge-estado.is-activo {
+  background: var(--gambeta-verde);
+  color: #FFFFFF;
+}
+
+.admin-badge-estado.is-inactivo {
+  background: var(--gambeta-rojo);
+  color: #FFFFFF;
+}
+
+.admin-item-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.admin-btn-accion {
+  padding: 0.28rem 0.55rem;
+  border: 1px solid var(--tema-borde);
+  background: var(--tema-sup);
+  color: var(--tema-texto);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-btn-accion:hover {
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  border-color: #000000;
+}
+
+.admin-btn-accion.is-peligro:hover {
+  background: var(--gambeta-rojo);
+  color: #FFFFFF;
+  border-color: #000000;
+}
+
+#admin-feedback {
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+#admin-feedback[data-tipo="ok"] {
+  background: rgba(2, 127, 49, 0.2);
+  border: 1px solid var(--gambeta-verde);
+  color: var(--tema-texto);
+}
+
+#admin-feedback[data-tipo="error"] {
+  background: rgba(254, 0, 0, 0.2);
+  border: 1px solid var(--gambeta-rojo);
+  color: var(--tema-texto);
+}

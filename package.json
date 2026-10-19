@@ -1,0 +1,13 @@
+{
+  "name": "gambeta-auriverde-iptv",
+  "version": "1.0.0",
+  "description": "Gambeta Auriverde TV - Plataforma privada de canales y deportes en vivo con control de acceso por teléfono",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
