@@ -14,6 +14,7 @@
   const CLAVE_DB_LOCAL = 'gambeta.db_local.v2';
   const CLAVE_PIN_LOCAL = 'gambeta.admin_pin.v2';
   const CLAVE_TEMA = 'gambeta.tema.v1';
+  const TELEFONO_STIVEN = '3026444564';
 
   // Limpiar claves antiguas v1 para que aplique de inmediato el nuevo PIN 0418 y número 3026444564
   try {
@@ -173,7 +174,14 @@
         return {
           ok: true,
           esAdminPin: true,
-          usuario: { id: 'admin-master', nombre: 'Stiven (Admin)', telefono: limpio, nota: 'Acceso maestro', activo: true },
+          usuario: {
+            id: 'admin-master',
+            nombre: 'Stiven',
+            telefono: TELEFONO_STIVEN,
+            nota: 'Administrador · Gambeta Auriverde',
+            activo: true,
+            esStiven: true,
+          },
         };
       }
       const u = db.usuarios.find((x) => telefonosCoinciden(x.telefono, limpio));
@@ -181,7 +189,13 @@
       if (u.activo === false) throw new Error('Tu acceso está temporalmente pausado por el administrador.');
       u.ultimoAcceso = new Date().toISOString();
       guardarDbRespaldo(db);
-      return { ok: true, usuario: u };
+      return {
+        ok: true,
+        usuario: {
+          ...u,
+          esStiven: telefonosCoinciden(u.telefono, TELEFONO_STIVEN),
+        },
+      };
     },
 
     async verificarSesion(telefono) {
@@ -200,43 +214,78 @@
       return { activo: Boolean(u && u.activo !== false), usuario: u || null };
     },
 
+    cabecerasAuth(pin) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (pin) headers['X-Admin-Pin'] = String(pin);
+      if (sesionActual?.telefono) headers['X-Member-Phone'] = String(sesionActual.telefono);
+      return headers;
+    },
+
+    filtrarLocalSegunSesion(usuarios, pin) {
+      const telSesion = normalizarTelefono(sesionActual?.telefono || '');
+      const esStiven =
+        Boolean(sesionActual?.esStiven) ||
+        (telSesion && telefonosCoinciden(telSesion, TELEFONO_STIVEN)) ||
+        (!telSesion && Boolean(pin));
+      if (esStiven) return { esStiven: true, lista: usuarios };
+      return {
+        esStiven: false,
+        lista: usuarios.filter((u) => u.creadoPor && telefonosCoinciden(u.creadoPor, telSesion)),
+      };
+    },
+
     async verificarAdmin(pin) {
       try {
         const r = await fetch('./api/admin/verify', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
-          body: JSON.stringify({ adminPin: pin }),
+          headers: this.cabecerasAuth(pin),
+          body: JSON.stringify({
+            adminPin: pin || '',
+            miembroTelefono: sesionActual?.telefono || '',
+          }),
         });
         if (r.status !== 404 && r.status !== 405) {
           const data = await r.json();
           this.modoServidor = true;
           if (!r.ok || !data.ok) throw new Error(data.error || 'PIN incorrecto');
-          guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          if (data.esStiven && pin) {
+            guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          }
           return data;
         }
       } catch (err) {
-        if (err.message && (err.message.includes('PIN') || err.message.includes('incorrecto'))) throw err;
+        if (err.message && (err.message.includes('PIN') || err.message.includes('incorrecto') || err.message.includes('autorizada'))) {
+          throw err;
+        }
       }
 
       this.modoServidor = false;
       const db = await obtenerDbRespaldo();
-      if (!esPinValido(pin, db.adminPin)) {
+      const telSesion = normalizarTelefono(sesionActual?.telefono || '');
+      const esMiembroRegular = Boolean(telSesion && !telefonosCoinciden(telSesion, TELEFONO_STIVEN));
+      if (!esMiembroRegular && !esPinValido(pin, db.adminPin)) {
         throw new Error('PIN de administrador incorrecto.');
       }
-      return { ok: true, usuarios: db.usuarios, actualizado: db.actualizado };
+      const { esStiven, lista } = this.filtrarLocalSegunSesion(db.usuarios, pin);
+      return { ok: true, esStiven, usuarios: lista, actualizado: db.actualizado };
     },
 
     async crearUsuario(pin, payload) {
       try {
         const r = await fetch('./api/admin/usuarios', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
-          body: JSON.stringify(payload),
+          headers: this.cabecerasAuth(pin),
+          body: JSON.stringify({
+            ...payload,
+            miembroTelefono: sesionActual?.telefono || '',
+          }),
         });
         if (r.status !== 404 && r.status !== 405) {
           const data = await r.json();
           if (!r.ok || !data.ok) throw new Error(data.error || 'No se pudo agregar');
-          guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          if (data.esStiven && pin) {
+            guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          }
           return data;
         }
       } catch (err) {
@@ -251,32 +300,40 @@
       if (!nombre) throw new Error('Ingresa el nombre o apodo de tu amigo.');
       if (telefono.length < 6) throw new Error('Ingresa un número válido (mínimo 6 dígitos).');
       const dup = db.usuarios.find((u) => normalizarTelefono(u.telefono) === telefono);
-      if (dup) throw new Error(`Ese número ya está asignado a ${dup.nombre}.`);
+      if (dup) throw new Error('Ese número de teléfono ya está registrado en el club.');
       const nuevo = {
         id: 'usr-' + Date.now().toString(36),
         nombre,
         telefono,
         nota,
         activo,
+        creadoPor: normalizarTelefono(sesionActual?.telefono || TELEFONO_STIVEN),
+        creadoPorNombre: sesionActual?.nombre || 'Stiven',
         creado: new Date().toISOString(),
         ultimoAcceso: null,
       };
       db.usuarios.unshift(nuevo);
       guardarDbRespaldo(db);
-      return { ok: true, usuario: nuevo, usuarios: db.usuarios };
+      const { esStiven, lista } = this.filtrarLocalSegunSesion(db.usuarios, pin);
+      return { ok: true, esStiven, usuario: nuevo, usuarios: lista };
     },
 
     async editarUsuario(pin, id, payload) {
       try {
         const r = await fetch(`./api/admin/usuarios/${encodeURIComponent(id)}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
-          body: JSON.stringify(payload),
+          headers: this.cabecerasAuth(pin),
+          body: JSON.stringify({
+            ...payload,
+            miembroTelefono: sesionActual?.telefono || '',
+          }),
         });
         if (r.status !== 404 && r.status !== 405) {
           const data = await r.json();
           if (!r.ok || !data.ok) throw new Error(data.error || 'No se pudo actualizar');
-          guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          if (data.esStiven && pin) {
+            guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          }
           return data;
         }
       } catch (err) {
@@ -287,6 +344,11 @@
       const idx = db.usuarios.findIndex((u) => u.id === id);
       if (idx === -1) throw new Error('Miembro no encontrado.');
       const actual = db.usuarios[idx];
+      const { esStiven } = this.filtrarLocalSegunSesion(db.usuarios, pin);
+      const telSesion = normalizarTelefono(sesionActual?.telefono || '');
+      if (!esStiven && (!actual.creadoPor || !telefonosCoinciden(actual.creadoPor, telSesion))) {
+        throw new Error('Solo puedes modificar a los amigos que tú mismo agregaste.');
+      }
       const nombre = payload.nombre !== undefined ? String(payload.nombre).trim() : actual.nombre;
       const telefono = payload.telefono !== undefined ? normalizarTelefono(payload.telefono) : actual.telefono;
       const nota = payload.nota !== undefined ? String(payload.nota).trim() : actual.nota;
@@ -294,22 +356,25 @@
       if (!nombre) throw new Error('El nombre no puede estar vacío.');
       if (telefono.length < 6) throw new Error('El teléfono debe tener al menos 6 dígitos.');
       const dup = db.usuarios.find((u, i) => i !== idx && normalizarTelefono(u.telefono) === telefono);
-      if (dup) throw new Error(`Ese número ya pertenece a ${dup.nombre}.`);
+      if (dup) throw new Error('Ese número ya está registrado en el club.');
       db.usuarios[idx] = { ...actual, nombre, telefono, nota, activo };
       guardarDbRespaldo(db);
-      return { ok: true, usuario: db.usuarios[idx], usuarios: db.usuarios };
+      const filtrado = this.filtrarLocalSegunSesion(db.usuarios, pin);
+      return { ok: true, esStiven: filtrado.esStiven, usuario: db.usuarios[idx], usuarios: filtrado.lista };
     },
 
     async eliminarUsuario(pin, id) {
       try {
         const r = await fetch(`./api/admin/usuarios/${encodeURIComponent(id)}`, {
           method: 'DELETE',
-          headers: { 'X-Admin-Pin': pin },
+          headers: this.cabecerasAuth(pin),
         });
         if (r.status !== 404 && r.status !== 405) {
           const data = await r.json();
           if (!r.ok || !data.ok) throw new Error(data.error || 'No se pudo eliminar');
-          guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          if (data.esStiven && pin) {
+            guardarDbRespaldo({ adminPin: pin, usuarios: data.usuarios });
+          }
           return data;
         }
       } catch (err) {
@@ -317,16 +382,23 @@
       }
 
       const db = await obtenerDbRespaldo();
+      const objetivo = db.usuarios.find((u) => u.id === id);
+      const { esStiven } = this.filtrarLocalSegunSesion(db.usuarios, pin);
+      const telSesion = normalizarTelefono(sesionActual?.telefono || '');
+      if (objetivo && !esStiven && (!objetivo.creadoPor || !telefonosCoinciden(objetivo.creadoPor, telSesion))) {
+        throw new Error('Solo puedes eliminar a los amigos que tú mismo agregaste.');
+      }
       db.usuarios = db.usuarios.filter((u) => u.id !== id);
       guardarDbRespaldo(db);
-      return { ok: true, usuarios: db.usuarios };
+      const filtrado = this.filtrarLocalSegunSesion(db.usuarios, pin);
+      return { ok: true, esStiven: filtrado.esStiven, usuarios: filtrado.lista };
     },
 
     async cambiarPin(pinActual, nuevoPin) {
       try {
         const r = await fetch('./api/admin/pin', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pinActual },
+          headers: this.cabecerasAuth(pinActual),
           body: JSON.stringify({ nuevoPin }),
         });
         if (r.status !== 404 && r.status !== 405) {
@@ -346,7 +418,7 @@
       try {
         const r = await fetch('./api/admin/import', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
+          headers: this.cabecerasAuth(pin),
           body: JSON.stringify({ usuarios }),
         });
         if (r.status !== 404 && r.status !== 405) {
@@ -368,9 +440,16 @@
   /* ==================== ESTADO DE SESIÓN Y ADMIN ==================== */
   let sesionActual = null;
   let adminPinActivo = '';
+  let esVistaStiven = false;
   let listaUsuariosAdmin = [];
   let editandoId = null;
   let filtroAdmin = '';
+
+  function esSesionStiven() {
+    if (!sesionActual) return false;
+    if (sesionActual.esStiven || sesionActual.id === 'admin-master') return true;
+    return telefonosCoinciden(sesionActual.telefono, TELEFONO_STIVEN);
+  }
 
   function leerSesion() {
     try {
@@ -382,6 +461,11 @@
 
   function guardarSesion(usuario) {
     sesionActual = usuario;
+    if (!usuario) {
+      adminPinActivo = '';
+      esVistaStiven = false;
+      listaUsuariosAdmin = [];
+    }
     try {
       if (usuario) localStorage.setItem(CLAVE_SESION, JSON.stringify(usuario));
       else localStorage.removeItem(CLAVE_SESION);
@@ -419,6 +503,24 @@
   }
 
   /* ==================== RENDERIZADO DEL PANEL CRUD ==================== */
+  function actualizarCabeceraVistaMiembros() {
+    const barraStiven = $('#admin-barra-stiven');
+    const cambiarPinBox = $('#admin-cambiar-pin-box');
+    const subtituloModal = $('#subtitulo-admin-modal');
+    const labelTotal = $('#admin-stat-label-total');
+
+    if (barraStiven) barraStiven.hidden = !esVistaStiven;
+    if (cambiarPinBox) cambiarPinBox.hidden = !esVistaStiven;
+    if (labelTotal) {
+      labelTotal.textContent = esVistaStiven ? 'Total Amigos' : 'Agregados por ti';
+    }
+    if (subtituloModal) {
+      subtituloModal.textContent = esVistaStiven
+        ? 'Vista Administrador (Stiven) · Viendo y gestionando todos los miembros del club.'
+        : 'Agrega a tus amigos y gestiona únicamente las personas que tú registraste.';
+    }
+  }
+
   function pintarTablaAdmin() {
     const contenedor = $('#admin-lista-usuarios');
     const contadorTotal = $('#admin-stat-total');
@@ -427,6 +529,8 @@
     const badgeModo = $('#admin-modo-almacenamiento');
 
     if (!contenedor) return;
+
+    actualizarCabeceraVistaMiembros();
 
     const total = listaUsuariosAdmin.length;
     const activos = listaUsuariosAdmin.filter((u) => u.activo !== false).length;
@@ -445,13 +549,19 @@
     const filtrados = !q
       ? listaUsuariosAdmin
       : listaUsuariosAdmin.filter((u) =>
-          `${u.nombre} ${u.telefono} ${u.nota || ''}`.toLowerCase().includes(q)
+          `${u.nombre} ${u.telefono} ${u.nota || ''} ${u.creadoPorNombre || ''}`.toLowerCase().includes(q)
         );
 
     if (!filtrados.length) {
       contenedor.innerHTML = `
         <div class="border border-dashed border-linea p-4 text-center text-xs text-slate-400">
-          ${q ? 'No hay amigos que coincidan con tu búsqueda.' : 'Aún no hay números registrados. Agrega el primero arriba.'}
+          ${
+            q
+              ? 'No hay amigos que coincidan con tu búsqueda.'
+              : esVistaStiven
+              ? 'Aún no hay números registrados. Agrega el primero arriba.'
+              : 'Aún no has agregado amigos. Usa el formulario de arriba para autorizar un número.'
+          }
         </div>`;
       return;
     }
@@ -460,6 +570,10 @@
       .map((u) => {
         const activo = u.activo !== false;
         const enEdicion = editandoId === u.id;
+        const mostrarInvitadoPor =
+          esVistaStiven &&
+          u.creadoPorNombre &&
+          (!u.creadoPor || !telefonosCoinciden(u.creadoPor, TELEFONO_STIVEN));
         return `
         <div class="admin-item-usuario ${activo ? '' : 'is-pausado'} ${enEdicion ? 'is-editando' : ''}" data-uid="${esc(u.id)}">
           <div class="admin-item-info">
@@ -469,6 +583,7 @@
                 ${activo ? 'Activo' : 'Pausado'}
               </span>
               ${u.nota ? `<span class="bg-sup-3 px-2 py-0.5 text-[11px] text-slate-300">${esc(u.nota)}</span>` : ''}
+              ${mostrarInvitadoPor ? `<span class="bg-sup-3 px-2 py-0.5 text-[11px] text-auriverde-oro">Por: ${esc(u.creadoPorNombre)}</span>` : ''}
             </div>
             <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
               <span class="font-mono text-auriverde-oro font-semibold">Tel: ${esc(u.telefono)}</span>
@@ -520,7 +635,7 @@
       chkActivo.checked = true;
       btnGuardar.textContent = '+ Agregar amigo';
       btnCancelar.hidden = true;
-      if (tituloForm) tituloForm.textContent = 'Agregar nuevo amigo autorizado';
+      if (tituloForm) tituloForm.textContent = '+ Agregar nuevo amigo autorizado';
     }
     pintarTablaAdmin();
   }
@@ -551,10 +666,24 @@
     if (!dialogo) return;
     if (!dialogo.open) dialogo.showModal();
 
+    // Si hay un miembro logueado que NO es Stiven, entra directo a gestionar solo sus propios invitados
+    if (sesionActual && !esSesionStiven() && !pinPrevia) {
+      try {
+        const res = await Api.verificarAdmin('');
+        esVistaStiven = false;
+        listaUsuariosAdmin = res.usuarios || [];
+        vistaLogin.hidden = true;
+        vistaCrud.hidden = false;
+        prepararEdicion(null);
+        return;
+      } catch { /* fallback */ }
+    }
+
     if (pinPrevia) {
       try {
         const res = await Api.verificarAdmin(pinPrevia);
         adminPinActivo = pinPrevia;
+        esVistaStiven = Boolean(res.esStiven);
         listaUsuariosAdmin = res.usuarios || [];
         vistaLogin.hidden = true;
         vistaCrud.hidden = false;
@@ -566,6 +695,7 @@
     if (adminPinActivo) {
       try {
         const res = await Api.verificarAdmin(adminPinActivo);
+        esVistaStiven = Boolean(res.esStiven);
         listaUsuariosAdmin = res.usuarios || [];
         vistaLogin.hidden = true;
         vistaCrud.hidden = false;
@@ -809,6 +939,7 @@
         try {
           const res = await Api.verificarAdmin(pin);
           adminPinActivo = pin;
+          esVistaStiven = Boolean(res.esStiven);
           listaUsuariosAdmin = res.usuarios || [];
           $('#admin-vista-pin').hidden = true;
           $('#admin-vista-crud').hidden = false;
@@ -817,9 +948,10 @@
             guardarSesion({
               id: 'admin-master',
               nombre: 'Stiven',
-              telefono: '3026444564',
+              telefono: TELEFONO_STIVEN,
               nota: 'Administrador',
               activo: true,
+              esStiven: true,
             });
           }
           prepararEdicion(null);

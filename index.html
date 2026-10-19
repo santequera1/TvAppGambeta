@@ -11,8 +11,8 @@
   <link rel="icon" type="image/svg+xml" href="./logo/gambeta-auriverde-dark.svg" />
   <link rel="preload" href="./data/catalogo-pro.json" as="fetch" crossorigin />
   <link rel="preconnect" href="https://barinaslive1.boldmss.com" crossorigin />
-  <link rel="stylesheet" href="./css/app.css?v=gambeta5" />
-  <link rel="stylesheet" href="./css/gambeta.css?v=gambeta5" />
+  <link rel="stylesheet" href="./css/app.css?v=gambeta6" />
+  <link rel="stylesheet" href="./css/gambeta.css?v=gambeta6" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap" media="print" onload="this.media='all'" />
 </head>
@@ -439,27 +439,27 @@
 
   <!-- ================= PANEL ADMIN CRUD (TELÉFONOS AUTORIZADOS) ================= -->
   <dialog id="dialogo-admin" class="m-auto p-0 text-slate-200 shadow-2xl" aria-labelledby="titulo-admin-modal">
-    <div class="p-5 sm:p-6">
-      <div class="flex items-start justify-between gap-4 border-b border-linea pb-4">
-        <div class="flex items-center gap-3">
-          <img data-logo-tema src="./logo/gambeta-auriverde-02.svg" alt="Gambeta Auriverde" class="h-11 w-11 object-contain" />
-          <div>
-            <h2 id="titulo-admin-modal" class="font-display text-2xl font-bold uppercase tracking-wide text-white">
-              Panel de Miembros <span class="text-auriverde-oro">· CRUD</span>
+    <div class="admin-modal-contenedor p-5 sm:p-6">
+      <div class="admin-modal-cabecera flex items-start justify-between gap-3 border-b border-linea pb-3.5">
+        <div class="flex min-w-0 items-center gap-3">
+          <img data-logo-tema src="./logo/gambeta-auriverde-02.svg" alt="Gambeta Auriverde" class="admin-modal-logo" />
+          <div class="min-w-0">
+            <h2 id="titulo-admin-modal" class="font-display text-xl sm:text-2xl font-bold uppercase tracking-wide text-white">
+              Panel de <span class="text-auriverde-oro">Miembros</span>
             </h2>
-            <p class="text-xs text-slate-400">Gestiona los números de teléfono de tus amigos (su número es su contraseña).</p>
+            <p id="subtitulo-admin-modal" class="text-xs text-slate-400">Gestiona los números de teléfono de tus amigos (su número es su contraseña).</p>
           </div>
         </div>
-        <button id="btn-cerrar-admin" type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-sup-2 hover:text-white" aria-label="Cerrar">
+        <button id="btn-cerrar-admin" type="button" class="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-sup-2 hover:text-white" aria-label="Cerrar">
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </div>
 
       <!-- PASO 1: Ingresar PIN Maestro -->
-      <div id="admin-vista-pin" class="py-6">
+      <div id="admin-vista-pin" class="py-5">
         <form id="form-admin-pin" class="mx-auto max-w-sm text-center" autocomplete="off">
           <p class="text-sm font-semibold text-white">Ingresa el PIN de Administrador</p>
-          <p class="mt-1 text-xs text-slate-400">Acceso exclusivo para gestionar la lista de amigos autorizados.</p>
+          <p class="mt-1 text-xs text-slate-400">Acceso exclusivo de administrador para gestionar todos los miembros del club.</p>
           <input
             id="admin-input-pin"
             type="password"
@@ -468,13 +468,13 @@
             required
           />
           <p id="admin-error-pin" class="mt-2 text-xs font-semibold text-vivo" hidden></p>
-          <button type="submit" class="acceso-btn mt-3">Desbloquear Panel CRUD</button>
+          <button type="submit" class="acceso-btn mt-3">Desbloquear Panel</button>
         </form>
       </div>
 
       <!-- PASO 2: Panel CRUD Completo -->
       <div id="admin-vista-crud" hidden>
-        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+        <div id="admin-barra-stiven" class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
           <span id="admin-modo-almacenamiento">🟢 Guardado en Servidor (data/usuarios.json)</span>
           <div class="flex flex-wrap gap-2">
             <button id="admin-btn-exportar" type="button" class="control !px-2.5 !py-1 text-xs">📥 Exportar JSON</button>
@@ -489,7 +489,7 @@
         <div class="admin-stats">
           <div class="admin-stat-card">
             <div id="admin-stat-total" class="admin-stat-valor">0</div>
-            <div class="admin-stat-label">Total Amigos</div>
+            <div id="admin-stat-label-total" class="admin-stat-label">Total Amigos</div>
           </div>
           <div class="admin-stat-card">
             <div id="admin-stat-activos" class="admin-stat-valor text-cancha">0</div>
@@ -503,8 +503,8 @@
 
         <!-- Formulario Agregar / Editar -->
         <form id="form-admin-usuario" class="admin-form-box" autocomplete="off">
-          <div class="flex items-center justify-between">
-            <h3 id="admin-form-titulo" class="text-sm font-bold text-auriverde-oro">➕ Agregar nuevo amigo autorizado</h3>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="admin-form-titulo" class="text-sm font-bold text-auriverde-oro">+ Agregar nuevo amigo autorizado</h3>
             <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-300">
               <input id="admin-input-activo" type="checkbox" checked class="h-4 w-4 rounded accent-cancha" />
               Acceso habilitado
@@ -519,7 +519,7 @@
             </div>
             <div>
               <label for="admin-input-telefono" class="block text-[11px] font-semibold uppercase text-slate-400">Teléfono (Contraseña) *</label>
-              <input id="admin-input-telefono" type="tel" inputmode="tel" maxlength="20" placeholder="Ej. 3026444564" required
+              <input id="admin-input-telefono" type="tel" inputmode="tel" maxlength="20" placeholder="Ej. 300 123 4567" required
                 class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 font-mono text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
             </div>
             <div>
@@ -550,8 +550,8 @@
         <!-- Lista de usuarios -->
         <div id="admin-lista-usuarios" class="admin-lista-scroll scroll-fino"></div>
 
-        <!-- Cambiar PIN Maestro -->
-        <details class="mt-4 border-t border-linea pt-3 text-xs text-slate-400">
+        <!-- Cambiar PIN Maestro (solo Stiven) -->
+        <details id="admin-cambiar-pin-box" class="mt-4 border-t border-linea pt-3 text-xs text-slate-400">
           <summary class="cursor-pointer font-semibold hover:text-white">Cambiar PIN Maestro de Administrador</summary>
           <form id="form-admin-cambiar-pin" class="mt-2 flex flex-wrap gap-2" autocomplete="off">
             <input id="admin-input-nuevo-pin" type="password" placeholder="Nuevo PIN (mínimo 4 caracteres)"
@@ -675,18 +675,18 @@
     <button id="btn-privacidad" type="button" class="hidden" hidden>Privacidad</button>
   </footer>
 
-  <script src="./js/parser.js?v=gambeta5"></script>
-  <script src="./js/player.js?v=gambeta5"></script>
-  <script src="./js/tnt-fuentes.js?v=gambeta5"></script>
-  <script src="./js/verificador.js?v=gambeta5"></script>
-  <script src="./js/estados-canales.js?v=gambeta5"></script>
-  <script src="./js/epg.js?v=gambeta5"></script>
-  <script src="./js/agenda.js?v=gambeta5"></script>
-  <script src="./js/analizador.js?v=gambeta5"></script>
-  <script src="./js/analitica.js?v=gambeta5"></script>
-  <script src="./js/servidores.js?v=gambeta5"></script>
-  <script src="./js/chat.js?v=gambeta5"></script>
-  <script src="./js/app.js?v=gambeta5"></script>
-  <script src="./js/acceso.js?v=gambeta5"></script>
+  <script src="./js/parser.js?v=gambeta6"></script>
+  <script src="./js/player.js?v=gambeta6"></script>
+  <script src="./js/tnt-fuentes.js?v=gambeta6"></script>
+  <script src="./js/verificador.js?v=gambeta6"></script>
+  <script src="./js/estados-canales.js?v=gambeta6"></script>
+  <script src="./js/epg.js?v=gambeta6"></script>
+  <script src="./js/agenda.js?v=gambeta6"></script>
+  <script src="./js/analizador.js?v=gambeta6"></script>
+  <script src="./js/analitica.js?v=gambeta6"></script>
+  <script src="./js/servidores.js?v=gambeta6"></script>
+  <script src="./js/chat.js?v=gambeta6"></script>
+  <script src="./js/app.js?v=gambeta6"></script>
+  <script src="./js/acceso.js?v=gambeta6"></script>
 </body>
 </html>

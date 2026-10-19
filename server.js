@@ -106,6 +106,8 @@ function guardarChatDb(chat) {
   } catch { /* ignore */ }
 }
 
+const TELEFONO_ADMIN_PRINCIPAL = '3026444564';
+
 function responderJson(res, status, datos) {
   const payload = JSON.stringify(datos);
   res.writeHead(status, {
@@ -113,7 +115,7 @@ function responderJson(res, status, datos) {
     'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Pin',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Pin, X-Member-Phone',
   });
   res.end(payload);
 }
@@ -146,11 +148,64 @@ function esPinValido(pin, dbPin) {
   return p === String(dbPin) || p === '0418' || p === '04218';
 }
 
+function esTelefonoStiven(tel) {
+  const limpio = normalizarTelefono(tel);
+  return Boolean(limpio && telefonosCoinciden(limpio, TELEFONO_ADMIN_PRINCIPAL));
+}
+
 function verificarPinAdmin(req, body, db) {
   const pinHeader = req.headers['x-admin-pin'];
   const pinBody = body?.adminPin || body?.pin;
   const pin = String(pinHeader || pinBody || '').trim();
   return esPinValido(pin, db.adminPin);
+}
+
+/**
+ * Resuelve quién está operando el panel de miembros:
+ * - Si es Stiven (3026444564) o entra con PIN maestro sin otro teléfono distinto, tiene rol 'stiven' (ve todos).
+ * - Si es otro miembro activo, tiene rol 'miembro' y solo ve/gestiona los que él mismo agregó (creadoPor).
+ */
+function resolverActorMiembros(req, body, db, urlObj) {
+  const pinOk = verificarPinAdmin(req, body, db);
+  const telHeader = req.headers['x-member-phone'] || body?.miembroTelefono || urlObj?.searchParams?.get('miembro') || '';
+  const telLimpio = normalizarTelefono(telHeader);
+
+  if (pinOk && (!telLimpio || esTelefonoStiven(telLimpio) || esPinValido(telHeader, db.adminPin))) {
+    return {
+      autorizado: true,
+      esStiven: true,
+      telefono: TELEFONO_ADMIN_PRINCIPAL,
+      nombre: 'Stiven',
+    };
+  }
+
+  if (telLimpio) {
+    if (esTelefonoStiven(telLimpio) && pinOk) {
+      return {
+        autorizado: true,
+        esStiven: true,
+        telefono: TELEFONO_ADMIN_PRINCIPAL,
+        nombre: 'Stiven',
+      };
+    }
+    const miembro = db.usuarios.find(u => u.activo !== false && telefonosCoinciden(u.telefono, telLimpio));
+    if (miembro && !esTelefonoStiven(miembro.telefono)) {
+      return {
+        autorizado: true,
+        esStiven: false,
+        telefono: normalizarTelefono(miembro.telefono),
+        nombre: miembro.nombre,
+      };
+    }
+  }
+
+  return { autorizado: false, esStiven: false, telefono: '', nombre: '' };
+}
+
+function filtrarUsuariosParaActor(usuarios, actor) {
+  if (!actor || !actor.autorizado) return [];
+  if (actor.esStiven) return usuarios;
+  return usuarios.filter(u => u.creadoPor && telefonosCoinciden(u.creadoPor, actor.telefono));
 }
 
 const server = http.createServer(async (req, res) => {
@@ -221,17 +276,18 @@ const server = http.createServer(async (req, res) => {
       const entrada = String(body.telefono || '').trim();
       const db = leerUsuariosDb();
 
-      // Si ingresa el PIN maestro de admin, también le permite entrar como Admin
+      // Si ingresa el PIN maestro de admin, también le permite entrar como Stiven (Admin)
       if (esPinValido(entrada, db.adminPin)) {
         return responderJson(res, 200, {
           ok: true,
           esAdminPin: true,
           usuario: {
             id: 'admin-master',
-            nombre: 'Administrador',
-            telefono: entrada,
-            nota: 'Acceso maestro',
+            nombre: 'Stiven',
+            telefono: TELEFONO_ADMIN_PRINCIPAL,
+            nota: 'Administrador · Gambeta Auriverde',
             activo: true,
+            esStiven: true,
           },
         });
       }
@@ -261,6 +317,7 @@ const server = http.createServer(async (req, res) => {
           telefono: encontrado.telefono,
           nota: encontrado.nota || '',
           activo: true,
+          esStiven: esTelefonoStiven(encontrado.telefono),
         },
       });
     }
@@ -268,7 +325,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/auth/check' && req.method === 'GET') {
       const tel = urlObj.searchParams.get('telefono') || '';
       const db = leerUsuariosDb();
-      if (tel && tel === String(db.adminPin)) {
+      if (tel && esPinValido(tel, db.adminPin)) {
         return responderJson(res, 200, { ok: true, activo: true });
       }
       const encontrado = db.usuarios.find(u => telefonosCoinciden(u.telefono, tel));
@@ -283,36 +340,41 @@ const server = http.createServer(async (req, res) => {
           nombre: encontrado.nombre,
           telefono: encontrado.telefono,
           nota: encontrado.nota || '',
+          esStiven: esTelefonoStiven(encontrado.telefono),
         },
       });
     }
 
-    /* ==================== API: CRUD ADMINISTRADOR ==================== */
+    /* ==================== API: CRUD MIEMBROS (STIVEN VE TODOS, MIEMBROS VEN SOLO LOS SUYOS) ==================== */
     if (pathname === '/api/admin/verify' && req.method === 'POST') {
       const body = await leerBodyJson(req);
       const db = leerUsuariosDb();
-      if (!verificarPinAdmin(req, body, db)) {
-        return responderJson(res, 401, { ok: false, error: 'PIN de administrador incorrecto.' });
+      const actor = resolverActorMiembros(req, body, db, urlObj);
+      if (!actor.autorizado) {
+        return responderJson(res, 401, { ok: false, error: 'PIN de administrador o sesión no autorizada.' });
       }
       return responderJson(res, 200, {
         ok: true,
+        esStiven: actor.esStiven,
         actualizado: db.actualizado,
-        usuarios: db.usuarios,
+        usuarios: filtrarUsuariosParaActor(db.usuarios, actor),
       });
     }
 
     if (pathname === '/api/admin/usuarios') {
       const db = leerUsuariosDb();
       const body = req.method === 'GET' ? {} : await leerBodyJson(req);
-      if (!verificarPinAdmin(req, body, db)) {
-        return responderJson(res, 401, { ok: false, error: 'PIN de administrador inválido.' });
+      const actor = resolverActorMiembros(req, body, db, urlObj);
+      if (!actor.autorizado) {
+        return responderJson(res, 401, { ok: false, error: 'No autorizado para gestionar miembros.' });
       }
 
       if (req.method === 'GET') {
         return responderJson(res, 200, {
           ok: true,
+          esStiven: actor.esStiven,
           actualizado: db.actualizado,
-          usuarios: db.usuarios,
+          usuarios: filtrarUsuariosParaActor(db.usuarios, actor),
         });
       }
 
@@ -328,7 +390,7 @@ const server = http.createServer(async (req, res) => {
         }
         const duplicado = db.usuarios.find(u => normalizarTelefono(u.telefono) === telefono);
         if (duplicado) {
-          return responderJson(res, 409, { ok: false, error: `Ese número ya está asignado a ${duplicado.nombre}.` });
+          return responderJson(res, 409, { ok: false, error: 'Ese número de teléfono ya se encuentra registrado en el club.' });
         }
 
         const nuevo = {
@@ -337,12 +399,19 @@ const server = http.createServer(async (req, res) => {
           telefono,
           nota,
           activo,
+          creadoPor: actor.telefono || TELEFONO_ADMIN_PRINCIPAL,
+          creadoPorNombre: actor.nombre || 'Stiven',
           creado: new Date().toISOString(),
           ultimoAcceso: null,
         };
         db.usuarios.unshift(nuevo);
         guardarUsuariosDb(db);
-        return responderJson(res, 201, { ok: true, usuario: nuevo, usuarios: db.usuarios });
+        return responderJson(res, 201, {
+          ok: true,
+          esStiven: actor.esStiven,
+          usuario: nuevo,
+          usuarios: filtrarUsuariosParaActor(db.usuarios, actor),
+        });
       }
     }
 
@@ -350,8 +419,9 @@ const server = http.createServer(async (req, res) => {
       const id = pathname.slice('/api/admin/usuarios/'.length).trim();
       const db = leerUsuariosDb();
       const body = req.method === 'DELETE' ? {} : await leerBodyJson(req);
-      if (!verificarPinAdmin(req, body, db)) {
-        return responderJson(res, 401, { ok: false, error: 'PIN de administrador inválido.' });
+      const actor = resolverActorMiembros(req, body, db, urlObj);
+      if (!actor.autorizado) {
+        return responderJson(res, 401, { ok: false, error: 'No autorizado.' });
       }
 
       const idx = db.usuarios.findIndex(u => u.id === id);
@@ -359,8 +429,12 @@ const server = http.createServer(async (req, res) => {
         return responderJson(res, 404, { ok: false, error: 'Miembro no encontrado.' });
       }
 
+      const actual = db.usuarios[idx];
+      if (!actor.esStiven && (!actual.creadoPor || !telefonosCoinciden(actual.creadoPor, actor.telefono))) {
+        return responderJson(res, 403, { ok: false, error: 'Solo puedes modificar a los amigos que tú mismo agregaste.' });
+      }
+
       if (req.method === 'PUT') {
-        const actual = db.usuarios[idx];
         const nombre = body.nombre !== undefined ? String(body.nombre).trim().slice(0, 60) : actual.nombre;
         const telefono = body.telefono !== undefined ? normalizarTelefono(body.telefono) : actual.telefono;
         const nota = body.nota !== undefined ? String(body.nota).trim().slice(0, 100) : actual.nota;
@@ -372,7 +446,7 @@ const server = http.createServer(async (req, res) => {
         }
         const duplicado = db.usuarios.find((u, i) => i !== idx && normalizarTelefono(u.telefono) === telefono);
         if (duplicado) {
-          return responderJson(res, 409, { ok: false, error: `Ese número ya pertenece a ${duplicado.nombre}.` });
+          return responderJson(res, 409, { ok: false, error: 'Ese número ya está registrado en el club.' });
         }
 
         db.usuarios[idx] = {
@@ -383,21 +457,32 @@ const server = http.createServer(async (req, res) => {
           activo,
         };
         guardarUsuariosDb(db);
-        return responderJson(res, 200, { ok: true, usuario: db.usuarios[idx], usuarios: db.usuarios });
+        return responderJson(res, 200, {
+          ok: true,
+          esStiven: actor.esStiven,
+          usuario: db.usuarios[idx],
+          usuarios: filtrarUsuariosParaActor(db.usuarios, actor),
+        });
       }
 
       if (req.method === 'DELETE') {
         const eliminado = db.usuarios.splice(idx, 1)[0];
         guardarUsuariosDb(db);
-        return responderJson(res, 200, { ok: true, eliminado, usuarios: db.usuarios });
+        return responderJson(res, 200, {
+          ok: true,
+          esStiven: actor.esStiven,
+          eliminado,
+          usuarios: filtrarUsuariosParaActor(db.usuarios, actor),
+        });
       }
     }
 
     if (pathname === '/api/admin/pin' && req.method === 'PUT') {
       const body = await leerBodyJson(req);
       const db = leerUsuariosDb();
-      if (!verificarPinAdmin(req, body, db)) {
-        return responderJson(res, 401, { ok: false, error: 'PIN actual incorrecto.' });
+      const actor = resolverActorMiembros(req, body, db, urlObj);
+      if (!actor.autorizado || !actor.esStiven) {
+        return responderJson(res, 401, { ok: false, error: 'Solo Stiven (Administrador) puede cambiar el PIN maestro.' });
       }
       const nuevoPin = String(body.nuevoPin || '').trim();
       if (!nuevoPin || nuevoPin.length < 4) {
@@ -411,8 +496,9 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/admin/import' && req.method === 'POST') {
       const body = await leerBodyJson(req);
       const db = leerUsuariosDb();
-      if (!verificarPinAdmin(req, body, db)) {
-        return responderJson(res, 401, { ok: false, error: 'PIN de administrador inválido.' });
+      const actor = resolverActorMiembros(req, body, db, urlObj);
+      if (!actor.autorizado || !actor.esStiven) {
+        return responderJson(res, 401, { ok: false, error: 'Solo el administrador principal puede importar la base de datos.' });
       }
       if (!Array.isArray(body.usuarios)) {
         return responderJson(res, 400, { ok: false, error: 'Formato de lista de usuarios no válido.' });
@@ -425,6 +511,8 @@ const server = http.createServer(async (req, res) => {
           telefono: normalizarTelefono(u.telefono),
           nota: String(u.nota || '').trim().slice(0, 100),
           activo: u.activo !== false,
+          creadoPor: u.creadoPor || TELEFONO_ADMIN_PRINCIPAL,
+          creadoPorNombre: u.creadoPorNombre || 'Stiven',
           creado: u.creado || new Date().toISOString(),
           ultimoAcceso: u.ultimoAcceso || null,
         }));
@@ -434,13 +522,12 @@ const server = http.createServer(async (req, res) => {
 
     /* ==================== ARCHIVOS ESTÁTICOS ==================== */
     let relPath = pathname === '/' ? '/index.html' : pathname;
-    // Bloquear lectura directa de adminPin si alguien pide /data/usuarios.json desde navegador público:
-    // devolvemos los usuarios pero sin exponer adminPin en texto plano si no envía cabecera admin
     if (relPath === '/data/usuarios.json') {
       const db = leerUsuariosDb();
+      const actor = resolverActorMiembros(req, {}, db, urlObj);
       return responderJson(res, 200, {
         actualizado: db.actualizado,
-        usuarios: db.usuarios,
+        usuarios: filtrarUsuariosParaActor(db.usuarios, actor),
       });
     }
 

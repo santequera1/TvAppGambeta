@@ -913,8 +913,11 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
 
 /* ==================== MODAL ADMIN CRUD ==================== */
 #dialogo-admin {
-  width: min(96vw, 760px);
+  width: min(94vw, 720px) !important;
+  max-width: 94vw !important;
   max-height: 90vh;
+  overflow-x: hidden !important;
+  overflow-y: auto;
   border: 2px solid var(--gambeta-amarillo);
   background: var(--tema-sup);
   color: var(--tema-texto);
@@ -925,6 +928,21 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
   background: rgba(0, 0, 0, 0.82);
 }
 
+.admin-modal-contenedor {
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.admin-modal-logo {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  min-width: 2.5rem !important;
+  max-width: 2.5rem !important;
+  flex-shrink: 0 !important;
+  object-fit: contain !important;
+}
+
 .admin-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -933,23 +951,76 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
 }
 
 .admin-stat-card {
-  padding: 0.55rem 0.75rem;
+  padding: 0.55rem 0.65rem;
   background: var(--tema-sup-2);
   border: 1px solid var(--tema-borde);
+  min-width: 0;
 }
 
 .admin-stat-valor {
   font-family: 'Barlow Condensed', system-ui, sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   font-weight: 800;
   line-height: 1.1;
 }
 
 .admin-stat-label {
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   text-transform: uppercase;
   font-weight: 700;
   color: var(--tema-texto-muted);
+  line-height: 1.2;
+}
+
+@media (max-width: 640px) {
+  #dialogo-admin {
+    width: 94vw !important;
+    max-width: 94vw !important;
+    max-height: 88vh !important;
+  }
+
+  .admin-modal-contenedor {
+    padding: 0.9rem !important;
+  }
+
+  .admin-modal-logo {
+    width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-width: 2.1rem !important;
+    max-width: 2.1rem !important;
+  }
+
+  .admin-stats {
+    gap: 0.35rem;
+  }
+
+  .admin-stat-card {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .admin-stat-valor {
+    font-size: 1.25rem;
+  }
+
+  .admin-stat-label {
+    font-size: 0.58rem;
+  }
+
+  .admin-form-box {
+    padding: 0.65rem !important;
+  }
+
+  .admin-item-usuario {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.45rem !important;
+    padding: 0.55rem 0.65rem !important;
+  }
+
+  .admin-item-acciones {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .admin-form-box {
