@@ -1,6 +1,6 @@
 {
   "adminPin": "0418",
-  "actualizado": "2026-10-19T20:47:23.883Z",
+  "actualizado": "2026-10-19T23:29:00.000Z",
   "usuarios": [
     {
       "id": "usr-stiven-admin",
@@ -8,8 +8,65 @@
       "telefono": "3026444564",
       "nota": "Administrador · Gambeta Auriverde",
       "activo": true,
+      "creadoPor": "3026444564",
+      "creadoPorNombre": "Stiven",
       "creado": "2026-10-19T15:30:00.000Z",
       "ultimoAcceso": "2026-10-19T20:47:23.882Z"
+    },
+    {
+      "id": "usr-santiago-l",
+      "nombre": "Santiago L.",
+      "telefono": "3008817338",
+      "nota": "Club Gambeta",
+      "activo": true,
+      "creadoPor": "3026444564",
+      "creadoPorNombre": "Stiven",
+      "creado": "2026-10-19T23:29:00.000Z",
+      "ultimoAcceso": null
+    },
+    {
+      "id": "usr-nopi",
+      "nombre": "Nopi",
+      "telefono": "3147465207",
+      "nota": "Club Gambeta",
+      "activo": true,
+      "creadoPor": "3026444564",
+      "creadoPorNombre": "Stiven",
+      "creado": "2026-10-19T23:29:00.000Z",
+      "ultimoAcceso": null
+    },
+    {
+      "id": "usr-osneyder",
+      "nombre": "Osneyder",
+      "telefono": "3233855658",
+      "nota": "Club Gambeta",
+      "activo": true,
+      "creadoPor": "3026444564",
+      "creadoPorNombre": "Stiven",
+      "creado": "2026-10-19T23:29:00.000Z",
+      "ultimoAcceso": null
+    },
+    {
+      "id": "usr-luis-miguel",
+      "nombre": "Luis Miguel",
+      "telefono": "3004130443",
+      "nota": "Club Gambeta",
+      "activo": true,
+      "creadoPor": "3026444564",
+      "creadoPorNombre": "Stiven",
+      "creado": "2026-10-19T23:29:00.000Z",
+      "ultimoAcceso": null
+    },
+    {
+      "id": "usr-allen",
+      "nombre": "Allen",
+      "telefono": "3043867848",
+      "nota": "Club Gambeta",
+      "activo": true,
+      "creadoPor": "3026444564",
+      "creadoPorNombre": "Stiven",
+      "creado": "2026-10-19T23:29:00.000Z",
+      "ultimoAcceso": null
     }
   ]
 }
