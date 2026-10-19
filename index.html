@@ -11,8 +11,8 @@
   <link rel="icon" type="image/svg+xml" href="./logo/gambeta-auriverde-dark.svg" />
   <link rel="preload" href="./data/catalogo-pro.json" as="fetch" crossorigin />
   <link rel="preconnect" href="https://barinaslive1.boldmss.com" crossorigin />
-  <link rel="stylesheet" href="./css/app.css?v=gambeta4" />
-  <link rel="stylesheet" href="./css/gambeta.css?v=gambeta4" />
+  <link rel="stylesheet" href="./css/app.css?v=gambeta5" />
+  <link rel="stylesheet" href="./css/gambeta.css?v=gambeta5" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap" media="print" onload="this.media='all'" />
 </head>
@@ -60,7 +60,7 @@
   <header class="cabecera">
     <div class="cabecera-interior">
       <a href="./" class="marca-gambeta" aria-label="Gambeta Auriverde, inicio">
-        <img id="logo-cabecera-img" src="./logo/gambeta-auriverde-01.svg" alt="Gambeta Auriverde" class="marca-escudo" />
+        <img id="logo-cabecera-img" data-logo-tema src="./logo/gambeta-auriverde-02.svg" alt="Gambeta Auriverde" class="marca-escudo" />
         <div class="marca-textos">
           <span class="marca-titulo">GAMBETA <span>AURIVERDE</span></span>
           <span class="marca-subtitulo">Club Privado · En Vivo</span>
@@ -80,7 +80,7 @@
         </button>
         <button id="btn-abrir-admin" type="button" class="btn-cabecera btn-cabecera-admin" title="Administrar números de teléfono autorizados">
           <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span>Miembros (CRUD)</span>
+          <span>Miembros</span>
         </button>
         <button id="btn-cerrar-sesion" type="button" class="btn-cabecera btn-cabecera-salir" title="Cerrar sesión" hidden>
           Salir
@@ -92,7 +92,7 @@
   <main class="principal">
 
     <!-- ================= BARRA SUPERIOR COMPACTA Y COLAPSABLE DE LISTAS Y PAÍSES ================= -->
-    <details class="barra-listas-top" open aria-label="Selector rápido de listas de canales">
+    <details class="barra-listas-top" aria-label="Selector rápido de listas de canales">
       <summary>
         <span class="barra-listas-titulo">
           <span class="indicador-colapso">▼</span>
@@ -144,7 +144,7 @@
             <p id="texto-cargando" role="status">Conectando…</p>
           </div>
           <div id="capa-reposo" class="video-capa video-capa-reposo" hidden>
-            <img src="./logo/gambeta-auriverde-01.svg" alt="" class="mb-2 h-16 w-16 object-contain opacity-90" />
+            <img data-logo-tema src="./logo/gambeta-auriverde-02.svg" alt="" class="mb-2 h-16 w-16 object-contain opacity-90" />
             <p id="texto-reposo" class="font-display text-2xl font-semibold text-white">Elige una señal</p>
             <p id="subtexto-reposo" class="text-sm text-slate-400">Las señales verificadas están justo debajo.</p>
           </div>
@@ -442,7 +442,7 @@
     <div class="p-5 sm:p-6">
       <div class="flex items-start justify-between gap-4 border-b border-linea pb-4">
         <div class="flex items-center gap-3">
-          <img src="./logo/gambeta-auriverde-01.svg" alt="Gambeta Auriverde" class="h-11 w-11 object-contain" />
+          <img data-logo-tema src="./logo/gambeta-auriverde-02.svg" alt="Gambeta Auriverde" class="h-11 w-11 object-contain" />
           <div>
             <h2 id="titulo-admin-modal" class="font-display text-2xl font-bold uppercase tracking-wide text-white">
               Panel de Miembros <span class="text-auriverde-oro">· CRUD</span>
@@ -668,25 +668,25 @@
 
   <footer class="mx-auto max-w-[1600px] px-4 pb-8 pt-6 text-center text-xs text-slate-500">
     <div class="flex flex-wrap items-center justify-center gap-2">
-      <img src="./logo/gambeta-auriverde-02.svg" alt="" class="h-4 w-4 opacity-70" />
+      <img data-logo-tema src="./logo/gambeta-auriverde-02.svg" alt="" class="h-4 w-4 opacity-70" />
       <span class="font-semibold text-slate-400">Gambeta Auriverde TV</span>
       <span>· Club Privado · Señales verificadas, La18HD y catálogo IPTV Nexus</span>
     </div>
     <button id="btn-privacidad" type="button" class="hidden" hidden>Privacidad</button>
   </footer>
 
-  <script src="./js/parser.js?v=gambeta4"></script>
-  <script src="./js/player.js?v=gambeta4"></script>
-  <script src="./js/tnt-fuentes.js?v=gambeta4"></script>
-  <script src="./js/verificador.js?v=gambeta4"></script>
-  <script src="./js/estados-canales.js?v=gambeta4"></script>
-  <script src="./js/epg.js?v=gambeta4"></script>
-  <script src="./js/agenda.js?v=gambeta4"></script>
-  <script src="./js/analizador.js?v=gambeta4"></script>
-  <script src="./js/analitica.js?v=gambeta4"></script>
-  <script src="./js/servidores.js?v=gambeta4"></script>
-  <script src="./js/chat.js?v=gambeta4"></script>
-  <script src="./js/app.js?v=gambeta4"></script>
-  <script src="./js/acceso.js?v=gambeta4"></script>
+  <script src="./js/parser.js?v=gambeta5"></script>
+  <script src="./js/player.js?v=gambeta5"></script>
+  <script src="./js/tnt-fuentes.js?v=gambeta5"></script>
+  <script src="./js/verificador.js?v=gambeta5"></script>
+  <script src="./js/estados-canales.js?v=gambeta5"></script>
+  <script src="./js/epg.js?v=gambeta5"></script>
+  <script src="./js/agenda.js?v=gambeta5"></script>
+  <script src="./js/analizador.js?v=gambeta5"></script>
+  <script src="./js/analitica.js?v=gambeta5"></script>
+  <script src="./js/servidores.js?v=gambeta5"></script>
+  <script src="./js/chat.js?v=gambeta5"></script>
+  <script src="./js/app.js?v=gambeta5"></script>
+  <script src="./js/acceso.js?v=gambeta5"></script>
 </body>
 </html>

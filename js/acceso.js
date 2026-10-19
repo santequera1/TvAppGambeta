@@ -67,6 +67,10 @@
       btn.textContent = t === 'claro' ? 'Modo Oscuro' : 'Modo Claro';
       btn.setAttribute('aria-pressed', String(t === 'claro'));
     }
+    const logoSrc = t === 'claro' ? './logo/gambeta-auriverde-01.svg' : './logo/gambeta-auriverde-02.svg';
+    document.querySelectorAll('[data-logo-tema], #logo-cabecera-img').forEach((img) => {
+      img.setAttribute('src', logoSrc);
+    });
   }
 
   function iniciarTema() {

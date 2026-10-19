@@ -335,36 +335,40 @@ html[data-tema="claro"] .marca-titulo span {
 
   .cabecera-interior {
     height: auto !important;
-    min-height: 3rem !important;
-    padding: 0.4rem 0.65rem !important;
-    gap: 0.4rem !important;
+    min-height: 2.85rem !important;
+    padding: 0.35rem 0.5rem !important;
+    gap: 0.35rem !important;
     flex-wrap: nowrap !important;
+    justify-content: space-between !important;
   }
 
   .marca-gambeta {
-    gap: 0.4rem !important;
+    gap: 0.35rem !important;
     min-width: 0;
+    flex-shrink: 0;
   }
 
   .marca-escudo {
-    width: 1.9rem !important;
-    height: 1.9rem !important;
+    width: 1.7rem !important;
+    height: 1.7rem !important;
     flex-shrink: 0;
   }
 
   .marca-titulo {
-    font-size: 1.05rem !important;
+    font-size: clamp(0.88rem, 3.8vw, 1.05rem) !important;
+    letter-spacing: 0.02em !important;
     white-space: nowrap !important;
+    overflow: visible !important;
   }
 
   .cabecera-acciones {
-    gap: 0.25rem !important;
+    gap: 0.22rem !important;
     flex-shrink: 0;
   }
 
   .btn-cabecera {
-    padding: 0.26rem 0.48rem !important;
-    font-size: 0.66rem !important;
+    padding: 0.24rem 0.42rem !important;
+    font-size: 0.64rem !important;
     white-space: nowrap !important;
   }
 
@@ -416,6 +420,11 @@ details.barra-listas-top > summary::-webkit-details-marker {
   color: #000000;
   font-weight: 800;
   border: 1px solid #000000;
+  transition: transform 0.15s ease;
+}
+
+details.barra-listas-top:not([open]) .indicador-colapso {
+  transform: rotate(-90deg);
 }
 
 /* Hace la lista de países y pestañas de 1 sola línea con "+ Más países y listas" a la derecha */
