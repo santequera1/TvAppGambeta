@@ -328,8 +328,48 @@ html[data-tema="claro"] .marca-titulo span {
 
 @media (max-width: 640px) {
   .badge-miembro,
-  #info-lista {
-    display: none;
+  #info-lista,
+  .marca-subtitulo {
+    display: none !important;
+  }
+
+  .cabecera-interior {
+    height: auto !important;
+    min-height: 3rem !important;
+    padding: 0.4rem 0.65rem !important;
+    gap: 0.4rem !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .marca-gambeta {
+    gap: 0.4rem !important;
+    min-width: 0;
+  }
+
+  .marca-escudo {
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    flex-shrink: 0;
+  }
+
+  .marca-titulo {
+    font-size: 1.05rem !important;
+    white-space: nowrap !important;
+  }
+
+  .cabecera-acciones {
+    gap: 0.25rem !important;
+    flex-shrink: 0;
+  }
+
+  .btn-cabecera {
+    padding: 0.26rem 0.48rem !important;
+    font-size: 0.66rem !important;
+    white-space: nowrap !important;
+  }
+
+  .btn-cabecera svg {
+    display: none !important;
   }
 }
 
@@ -615,6 +655,7 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   color: var(--tema-texto);
 }
 
@@ -626,7 +667,10 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
 }
 
 .la18hd-tab {
-  padding: 0.18rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
   font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -636,26 +680,28 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
   cursor: pointer;
 }
 
-.la18hd-tab.is-active {
-  background: var(--gambeta-amarillo);
-  color: #000000;
-  border-color: #000000;
+.la18hd-tab.is-active,
+.la18hd-tab.is-activa {
+  background: var(--gambeta-amarillo) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
 }
 
 .la18hd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
-  gap: 0.3rem;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.35rem;
   margin-top: 0.45rem;
-  max-height: 175px;
+  max-height: 190px;
   overflow-y: auto;
 }
 
 .la18hd-card {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.5rem;
+  justify-content: space-between;
+  gap: 0.45rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
   border: 1px solid var(--tema-borde);
   background: var(--tema-sup-2);
@@ -677,33 +723,34 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
 }
 
 .la18hd-dot {
-  width: 0.45rem;
-  height: 0.45rem;
+  width: 0.5rem;
+  height: 0.5rem;
   flex-shrink: 0;
   background: var(--gambeta-verde);
 }
 
-.la18hd-dot.is-off {
-  background: var(--gambeta-rojo);
+.la18hd-dot.is-off,
+.la18hd-dot.is-offline {
+  background: var(--gambeta-rojo) !important;
 }
 
-.la18hd-card-info {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
+.la18hd-nombre,
 .la18hd-card-nombre {
-  font-size: 0.72rem;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
   font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.la18hd-estado-tag,
 .la18hd-card-cat {
-  font-size: 0.6rem;
-  opacity: 0.8;
+  flex-shrink: 0;
+  font-size: 0.64rem;
+  font-weight: 700;
+  opacity: 0.85;
 }
 
 /* ==================== SEÑALES RÁPIDAS ==================== */

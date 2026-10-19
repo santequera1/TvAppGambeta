@@ -632,11 +632,17 @@
     canalLa18hdActivo = url;
     iframe.src = url;
     iframe.hidden = false;
+    const capaReposo = $('#capa-reposo');
+    const capaCargando = $('#capa-cargando');
+    const capaError = $('#capa-error');
+    if (capaReposo) capaReposo.hidden = true;
+    if (capaCargando) capaCargando.hidden = true;
+    if (capaError) capaError.hidden = true;
     if (barraIframe) barraIframe.hidden = false;
-    const linkExterno = $('#btn-abrir-externo-la18hd');
+    const linkExterno = $('#link-abrir-la18hd') || $('#btn-abrir-externo-la18hd');
     if (linkExterno) linkExterno.href = url;
     if (tituloFicha) tituloFicha.textContent = `${nombre} · Señal Web`;
-    if (metaFicha) metaFicha.textContent = 'Reproduciendo señal integrada de La18HD · Haz clic en "Volver a reproductor M3U" o elige un canal de la lista derecha para salir.';
+    if (metaFicha) metaFicha.textContent = 'Reproduciendo señal integrada de La18HD · Si tu navegador móvil bloquea anuncios/iframes, toca "Abrir en pestaña".';
     pintarLa18hd();
   }
 
