@@ -131,9 +131,10 @@
     const { url } = canal;
     const inicio = Date.now();
     if (canal.compatible === false) return { ok: false, restringido: true, motivo: `formato ${String(canal.formato).toUpperCase()} no compatible con navegadores` };
-    if (global.location?.protocol === 'https:' && url.startsWith('http:')) {
-      return { ok: false, restringido: true, motivo: 'stream http:// bloqueado en página https:// (contenido mixto)' };
-    }
+    const urlConsulta =
+      url && url.startsWith('http://') && !url.includes('/api/hls-proxy')
+        ? `/api/hls-proxy?url=${encodeURIComponent(url)}`
+        : url;
 
     const ctrl = new AbortController();
     const cancelar = () => ctrl.abort();
@@ -142,7 +143,7 @@
     const timer = setTimeout(() => { porTiempo = true; ctrl.abort(); }, CFG.timeoutMs);
 
     try {
-      const resp = await fetch(url, {
+      const resp = await fetch(urlConsulta, {
         signal: ctrl.signal,
         cache: 'no-store',
         credentials: 'omit',

@@ -9,99 +9,111 @@ const HLS_ESTABLE = Object.freeze({
 });
 const CANALES_PARTIDO_HOY = [
   {
-    "nombre": "ESPN",
-    "url": "https://barinaslive1.boldmss.com/ESPN/ESPN.isml/ESPN.m3u8",
+    "nombre": "ESPN Latino",
+    "url": "http://190.61.47.54:8000/play/a004/index.m3u8",
     "opciones": [
       {
         "nombre": "ESPN Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN/ESPN.isml/ESPN.m3u8",
-        "origen": "data/catalogo-pe.m3u"
+        "url": "http://190.61.47.54:8000/play/a004/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       },
       {
-        "nombre": "ESPN 2 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_2/ESPN_2.isml/ESPN_2.m3u8",
-        "origen": "data/catalogo-pe.m3u"
+        "nombre": "ESPN Internacional (1080p)",
+        "url": "http://181.78.197.59:8000/play/a07z/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       },
       {
-        "nombre": "ESPN 3 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_3/ESPN_3.isml/ESPN_3.m3u8",
-        "origen": "data/catalogo-co.m3u"
+        "nombre": "ESPN HD (720p)",
+        "url": "http://85.237.89.160:9590/usa-s/ESPN-HD/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       },
       {
-        "nombre": "ESPN 4 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_4/ESPN_4.isml/ESPN_4.m3u8",
-        "origen": "data/catalogo-pe.m3u"
-      },
-      {
-        "nombre": "ESPN 5 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_5/ESPN_5.isml/ESPN_5.m3u8",
-        "origen": "data/catalogo-pe.m3u"
-      },
-      {
-        "nombre": "ESPN 6 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_6/ESPN_6.isml/ESPN_6.m3u8",
-        "origen": "data/catalogo-pe.m3u"
-      },
-      {
-        "nombre": "ESPN 7 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_7/ESPN_7.isml/ESPN_7.m3u8",
-        "origen": "data/catalogo-pe.m3u"
-      }
-    ]
-  },
-  {
-    "nombre": "ESPN 2 / CHV",
-    "url": "https://barinaslive1.boldmss.com/ESPN_2/ESPN_2.isml/ESPN_2.m3u8",
-    "opciones": [
-      {
-        "nombre": "ChileVision (1080p)",
-        "url": "http://15.204.246.24:8080/CHVHD/index.m3u8",
-        "origen": "https://iptv-org.github.io/iptv/index.m3u"
+        "nombre": "ESPN 4 (1080p)",
+        "url": "http://181.78.197.59:8000/play/a07n/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       }
     ],
     "respaldos": [
       {
-        "nombre": "ESPN 2 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_2/ESPN_2.isml/ESPN_2.m3u8",
-        "origen": "data/catalogo-pe.m3u"
+        "nombre": "ESPN Internacional (1080p)",
+        "url": "http://181.78.197.59:8000/play/a07z/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
+      },
+      {
+        "nombre": "ESPN HD (720p)",
+        "url": "http://85.237.89.160:9590/usa-s/ESPN-HD/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       }
     ]
   },
   {
-    "nombre": "ESPN 3 / ESPN 5 / Pluto Deportes",
-    "url": "https://barinaslive1.boldmss.com/ESPN_3/ESPN_3.isml/ESPN_3.m3u8",
+    "nombre": "ESPN 2 Latino",
+    "url": "http://190.61.47.54:8000/play/a005/index.m3u8",
     "opciones": [
       {
-        "nombre": "Pluto TV Deportes",
-        "url": "https://jmp2.uk/plu-5dcde07af1c85b0009b18651.m3u8",
-        "origen": "https://iptv-org.github.io/iptv/index.m3u"
+        "nombre": "ESPN 2 Latin America (1080p)",
+        "url": "http://190.61.47.54:8000/play/a005/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       },
       {
-        "nombre": "Pluto TV Competition",
-        "url": "https://jmp2.uk/plu-603fde9026ecbf0007752c2c.m3u8",
-        "origen": "https://iptv-org.github.io/iptv/index.m3u"
+        "nombre": "ESPN 2 HD (720p)",
+        "url": "http://85.237.89.160:9590/usa-s/ESPN-2-HD/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       },
       {
-        "nombre": "Pluto TV E-Sports",
-        "url": "https://jmp2.uk/plu-5ff3934600d4c7000733ff49.m3u8",
-        "origen": "https://iptv-org.github.io/iptv/index.m3u"
-      },
-      {
-        "nombre": "Pluto TV Esportes",
-        "url": "https://jmp2.uk/plu-5f32d2db0af67400077f29c4.m3u8",
-        "origen": "https://iptv-org.github.io/iptv/index.m3u"
+        "nombre": "Fox Sports (1080p)",
+        "url": "http://158.172.155.130:8000/play/a09x/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       }
     ],
     "respaldos": [
       {
-        "nombre": "ESPN 3 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_3/ESPN_3.isml/ESPN_3.m3u8",
-        "origen": "data/catalogo-co.m3u"
+        "nombre": "ESPN 2 HD (720p)",
+        "url": "http://85.237.89.160:9590/usa-s/ESPN-2-HD/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       },
       {
-        "nombre": "ESPN 5 Latin America (1080p)",
-        "url": "https://barinaslive1.boldmss.com/ESPN_5/ESPN_5.isml/ESPN_5.m3u8",
-        "origen": "data/catalogo-pe.m3u"
+        "nombre": "Fox Sports (1080p)",
+        "url": "http://158.172.155.130:8000/play/a09x/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
+      }
+    ]
+  },
+  {
+    "nombre": "ESPN 3 / Win Sports",
+    "url": "http://181.78.197.59:8000/play/a081/index.m3u8",
+    "opciones": [
+      {
+        "nombre": "ESPN 3 (720p)",
+        "url": "http://181.78.197.59:8000/play/a081/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
+      },
+      {
+        "nombre": "Win Sports Colombia (1080p)",
+        "url": "http://138.121.15.230:9002/WIN-SPORT/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
+      },
+      {
+        "nombre": "ESPN 4 (1080p)",
+        "url": "http://181.78.197.59:8000/play/a07n/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
+      },
+      {
+        "nombre": "TyC Sports (1080p)",
+        "url": "https://amg26268-amg26268c14-freelivesports-emea-10267.playouts.now.amagi.tv/ts-us-e2-n2/playlist/amg26268-sportsstudio-tycsports-freelivesportsemea/playlist.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
+      }
+    ],
+    "respaldos": [
+      {
+        "nombre": "Win Sports Colombia (1080p)",
+        "url": "http://138.121.15.230:9002/WIN-SPORT/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
+      },
+      {
+        "nombre": "ESPN 4 (1080p)",
+        "url": "http://181.78.197.59:8000/play/a07n/index.m3u8",
+        "origen": "https://dearbulut.github.io/iptv/playlists/online.m3u"
       }
     ]
   }

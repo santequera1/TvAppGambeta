@@ -717,7 +717,7 @@
 
   /* ==================== INTEGRACIÓN SEÑALES WEB LA18HD ==================== */
   let datosLa18hd = null;
-  let categoriaLa18hd = 'COLOMBIA';
+  let categoriaLa18hd = 'LATINOAMERICA';
   let canalLa18hdActivo = null;
 
   async function cargarLa18hd() {
@@ -798,7 +798,7 @@
 
     const categorias = Object.keys(datosLa18hd);
     if (!categorias.includes(categoriaLa18hd) && categorias.length) {
-      categoriaLa18hd = categorias.includes('COLOMBIA') ? 'COLOMBIA' : categorias[0];
+      categoriaLa18hd = categorias.includes('LATINOAMERICA') ? 'LATINOAMERICA' : categorias[0];
     }
 
     tabsEl.innerHTML = categorias
@@ -813,7 +813,12 @@
       })
       .join('');
 
-    const canales = Array.isArray(datosLa18hd[categoriaLa18hd]) ? datosLa18hd[categoriaLa18hd] : [];
+    let canales = Array.isArray(datosLa18hd[categoriaLa18hd]) ? [...datosLa18hd[categoriaLa18hd]] : [];
+    if (categoriaLa18hd === 'LATINOAMERICA' && Array.isArray(datosLa18hd.COLOMBIA)) {
+      const linksExistentes = new Set(canales.map((c) => c.Link));
+      const extrasColombia = datosLa18hd.COLOMBIA.filter((c) => !linksExistentes.has(c.Link));
+      canales = [...extrasColombia, ...canales];
+    }
     gridEl.innerHTML = canales
       .map((c) => {
         const activo = c.Estado === 'Activo';

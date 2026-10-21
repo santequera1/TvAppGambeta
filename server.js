@@ -12,6 +12,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { Readable } = require('stream');
 
 const PORT = Number(process.env.PORT) || 5500;
 const ROOT = __dirname;
@@ -217,6 +218,121 @@ const server = http.createServer(async (req, res) => {
   const pathname = decodeURIComponent(urlObj.pathname);
 
   try {
+    /* ==================== API: PROXY HLS (PARA SEÑALES HTTP:// EN PÁGINA HTTPS://) ==================== */
+    if (pathname === '/api/hls-proxy' && (req.method === 'GET' || req.method === 'HEAD')) {
+      const targetRaw = urlObj.searchParams.get('url') || '';
+      if (!targetRaw || !/^https?:\/\//i.test(targetRaw)) {
+        return responderJson(res, 400, { error: 'URL de stream inválida' });
+      }
+      let targetUrl;
+      try {
+        targetUrl = new URL(targetRaw);
+      } catch {
+        return responderJson(res, 400, { error: 'URL malformada' });
+      }
+      const hostLower = targetUrl.hostname.toLowerCase();
+      if (
+        hostLower === 'localhost' ||
+        hostLower === '127.0.0.1' ||
+        hostLower === '0.0.0.0' ||
+        hostLower.startsWith('169.254.') ||
+        hostLower.startsWith('192.168.') ||
+        hostLower.startsWith('10.')
+      ) {
+        return responderJson(res, 403, { error: 'Host no permitido' });
+      }
+
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 14000);
+      req.on('close', () => {
+        clearTimeout(timeout);
+        ctrl.abort();
+      });
+
+      try {
+        const upstream = await fetch(targetUrl.href, {
+          method: req.method,
+          signal: ctrl.signal,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 VLC/3.0.18',
+            'Accept': '*/*',
+          },
+        });
+        clearTimeout(timeout);
+
+        if (!upstream.ok) {
+          res.writeHead(upstream.status, {
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'no-store',
+          });
+          return res.end();
+        }
+
+        const finalUrl = upstream.url || targetUrl.href;
+        const ctype = (upstream.headers.get('content-type') || '').toLowerCase();
+        const esM3u8 =
+          ctype.includes('mpegurl') ||
+          /\.m3u8(\?|$)/i.test(finalUrl) ||
+          /\.m3u8(\?|$)/i.test(targetUrl.href);
+
+        if (esM3u8 && req.method === 'GET') {
+          const texto = await upstream.text();
+          if (texto.trimStart().startsWith('#EXTM3U')) {
+            const reescrito = texto
+              .split(/\r?\n/)
+              .map((linea) => {
+                const limpia = linea.trim();
+                if (!limpia) return linea;
+                if (limpia.startsWith('#')) {
+                  return linea.replace(/URI="([^"]+)"/gi, (_m, uri) => {
+                    try {
+                      const abs = new URL(uri, finalUrl).href;
+                      return `URI="/api/hls-proxy?url=${encodeURIComponent(abs)}"`;
+                    } catch {
+                      return _m;
+                    }
+                  });
+                }
+                try {
+                  const abs = new URL(limpia, finalUrl).href;
+                  return `/api/hls-proxy?url=${encodeURIComponent(abs)}`;
+                } catch {
+                  return linea;
+                }
+              })
+              .join('\n');
+
+            res.writeHead(200, {
+              'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
+              'Access-Control-Allow-Origin': '*',
+              'Cache-Control': 'no-store',
+            });
+            return res.end(reescrito);
+          }
+        }
+
+        const headersOut = {
+          'Content-Type': upstream.headers.get('content-type') || 'video/mp2t',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache',
+        };
+        const clen = upstream.headers.get('content-length');
+        if (clen) headersOut['Content-Length'] = clen;
+        res.writeHead(200, headersOut);
+        if (req.method === 'HEAD' || !upstream.body) {
+          return res.end();
+        }
+        Readable.fromWeb(upstream.body).on('error', () => res.end()).pipe(res);
+        return;
+      } catch (err) {
+        clearTimeout(timeout);
+        if (!res.headersSent) {
+          res.writeHead(502, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'text/plain' });
+        }
+        return res.end('Stream proxy error');
+      }
+    }
+
     /* ==================== API: SEÑALES LA18HD ==================== */
     if (pathname === '/api/la18hd' && req.method === 'GET') {
       const cacheFile = path.join(ROOT, 'data', 'la18hd-status.json');

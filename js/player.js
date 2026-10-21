@@ -119,13 +119,17 @@
       this.diagnostico = { pais: canal.pais || '', fuente: canal.fuente || 'lista', inicioVideoMs: null,
         congelamientos: 0, bufferingMs: 0, reconexiones: 0, errores: [], resultado: 'cargando' };
       this.probadoNativo = false;
-      const { url, formato } = canal;
+      const { url: rawUrl, formato } = canal;
+      const url =
+        rawUrl && rawUrl.startsWith('http://') && !rawUrl.includes('/api/hls-proxy')
+          ? `/api/hls-proxy?url=${encodeURIComponent(rawUrl)}`
+          : rawUrl;
 
       // Casos que sabemos de antemano que el navegador no puede reproducir.
       if (!canal.compatible) {
         return this._caido(`formato ${NOMBRE_FORMATO[formato] || formato} no compatible con navegadores (sí con VLC)`, 'formato');
       }
-      if (location.protocol === 'https:' && url.startsWith('http:')) {
+      if (false && location.protocol === 'https:' && url.startsWith('http:')) {
         return this._caido('el stream usa http:// y esta página https://; el navegador lo bloquea (contenido mixto)', 'mixto');
       }
 
