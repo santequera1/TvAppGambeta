@@ -1115,3 +1115,555 @@ details.filtros-categorias-caja > summary::-webkit-details-marker {
   border: 1px solid var(--gambeta-rojo);
   color: var(--tema-texto);
 }
+
+/* ==================== PESTAÑA DE ACTIVIDAD, ONLINE, IPS Y RANKING (STIVEN) ==================== */
+.admin-tabs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1.5px solid var(--tema-borde);
+}
+
+.admin-tabs-nav[hidden] {
+  display: none !important;
+}
+
+.admin-tab-btn {
+  flex: 1 1 180px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1.5px solid var(--tema-borde);
+  background: var(--tema-sup-2);
+  color: var(--tema-texto);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.admin-tab-btn:hover {
+  border-color: var(--gambeta-amarillo);
+}
+
+.admin-tab-btn.is-activa {
+  background: var(--gambeta-amarillo) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.admin-tab-pill {
+  padding: 0.08rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 900;
+  background: var(--gambeta-verde);
+  color: #FFFFFF;
+}
+
+.admin-stats-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+  .admin-stats-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.act-bloque {
+  padding: 0.7rem;
+  background: var(--tema-sup-2);
+  border: 1px solid var(--tema-borde);
+}
+
+.act-bloque-titulo {
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tema-texto);
+}
+
+.act-ranking-lista {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.act-ranking-item {
+  padding: 0.45rem 0.6rem;
+  background: var(--tema-sup);
+  border: 1px solid var(--tema-borde);
+}
+
+.act-ranking-item.is-online {
+  border-color: var(--gambeta-verde);
+}
+
+.act-medalla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: var(--tema-sup-3);
+  border: 1px solid var(--tema-borde);
+}
+
+.act-medalla.is-top {
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  border-color: #000000;
+}
+
+.act-pill-online {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.08rem 0.4rem;
+  font-size: 0.64rem;
+  font-weight: 800;
+  background: rgba(2, 127, 49, 0.2);
+  color: #22c55e;
+  border: 1px solid var(--gambeta-verde);
+}
+
+.act-barra-fondo {
+  margin-top: 0.35rem;
+  height: 0.35rem;
+  width: 100%;
+  background: var(--tema-sup-3);
+  overflow: hidden;
+}
+
+.act-barra-relleno {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gambeta-verde), var(--gambeta-amarillo));
+}
+
+.act-detalle-scroll {
+  margin-top: 0.5rem;
+  max-height: 34vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.act-user-card {
+  padding: 0.6rem 0.7rem;
+  background: var(--tema-sup);
+  border: 1px solid var(--tema-borde);
+}
+
+.act-user-card.is-online {
+  border: 1.5px solid var(--gambeta-verde);
+  box-shadow: inset 3px 0 0 var(--gambeta-verde);
+}
+
+.act-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.act-status-badge.is-online {
+  background: var(--gambeta-verde);
+  color: #FFFFFF;
+}
+
+.act-status-badge.is-offline {
+  background: var(--tema-sup-3);
+  color: var(--tema-texto-muted);
+}
+
+.act-ip-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.45rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  background: var(--tema-sup-2);
+  border: 1px solid var(--tema-borde);
+  color: var(--tema-texto);
+}
+
+.act-historial-scroll {
+  max-height: 22vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.act-historial-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.35rem 0.55rem;
+  background: var(--tema-sup);
+  border: 1px solid var(--tema-borde);
+}
+
+/* ==================== CHAT INTERACTIVO DE LA TRIBUNA ==================== */
+.caja-chat-interactiva {
+  border: 1.5px solid var(--gambeta-verde) !important;
+}
+
+.chat-online-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  background: var(--gambeta-verde);
+  color: #FFFFFF;
+  border: 1px solid #000000;
+}
+
+.chat-badge-nuevos {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 900;
+  background: var(--gambeta-rojo);
+  color: #FFFFFF;
+}
+
+.chat-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border: 1px solid var(--tema-borde);
+  background: var(--tema-sup-2);
+  color: var(--tema-texto);
+  cursor: pointer;
+}
+
+.chat-tool-btn:hover {
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  border-color: #000000;
+}
+
+.chat-encuesta-box,
+.chat-encuesta-crear {
+  margin: 0.45rem 0;
+  padding: 0.55rem 0.65rem;
+  background: var(--tema-sup-2);
+  border: 1.5px solid var(--gambeta-amarillo);
+}
+
+.chat-poll-opcion {
+  position: relative;
+  width: 100%;
+  padding: 0.38rem 0.6rem;
+  text-align: left;
+  border: 1px solid var(--tema-borde);
+  background: var(--tema-sup);
+  color: var(--tema-texto);
+  overflow: hidden;
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+
+.chat-poll-opcion.is-votada {
+  border-color: var(--gambeta-verde);
+  font-weight: 800;
+}
+
+.chat-poll-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgba(2, 127, 49, 0.26);
+  transition: width 0.25s ease;
+  pointer-events: none;
+}
+
+.chat-poll-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.chat-stage-wrap {
+  position: relative;
+}
+
+.chat-banner-gol {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  z-index: 12;
+  padding: 0.45rem 0.75rem;
+  text-align: center;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+  animation: pulsoGol 0.55s ease infinite alternate;
+}
+
+@keyframes pulsoGol {
+  from { transform: scale(0.98); }
+  to { transform: scale(1.02); }
+}
+
+.chat-floating-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.chat-float-emoji {
+  position: absolute;
+  bottom: 8px;
+  font-size: 1.45rem;
+  animation: subirEmojiTribuna 2s ease-out forwards;
+}
+
+@keyframes subirEmojiTribuna {
+  0% {
+    transform: translateY(0) scale(0.75);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-170px) scale(1.3);
+    opacity: 0;
+  }
+}
+
+.chat-msg-card {
+  padding: 0.45rem 0.55rem !important;
+  margin-bottom: 0.35rem !important;
+  background: var(--tema-sup-2) !important;
+  border: 1px solid var(--tema-borde) !important;
+}
+
+.chat-msg-card.is-gol {
+  border: 1.5px solid var(--gambeta-amarillo) !important;
+  background: rgba(253, 208, 3, 0.1) !important;
+}
+
+.chat-msg-card.is-admin {
+  border-left: 3px solid var(--gambeta-verde) !important;
+}
+
+.chat-msg-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.chat-avatar {
+  width: 1.8rem;
+  height: 1.8rem;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  border: 1px solid #000000;
+}
+
+.chat-msg-contenido {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-msg-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+}
+
+.chat-msg-autor {
+  font-weight: 800;
+  color: var(--tema-texto);
+}
+
+.chat-badge-admin {
+  padding: 0.05rem 0.35rem;
+  font-size: 0.6rem;
+  font-weight: 900;
+  background: var(--gambeta-amarillo);
+  color: #000000;
+  border: 1px solid #000000;
+}
+
+.chat-msg-pais {
+  font-size: 0.64rem;
+  padding: 0.05rem 0.3rem;
+  background: var(--tema-sup-3);
+  color: var(--tema-texto-muted);
+}
+
+.chat-msg-hora {
+  font-size: 0.64rem;
+  color: var(--tema-texto-muted);
+}
+
+.chat-btn-reply {
+  margin-left: auto;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--tema-texto-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.chat-btn-reply:hover {
+  color: var(--gambeta-amarillo);
+}
+
+.chat-msg-cita {
+  margin-top: 0.2rem;
+  padding: 0.18rem 0.45rem;
+  font-size: 0.68rem;
+  background: var(--tema-sup);
+  border-left: 2px solid var(--gambeta-amarillo);
+  color: var(--tema-texto-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-cuerpo.is-gol-texto {
+  font-weight: 900;
+  color: var(--gambeta-amarillo);
+  font-size: 0.85rem;
+}
+
+html[data-tema="claro"] .chat-cuerpo.is-gol-texto {
+  color: var(--gambeta-verde);
+}
+
+.chat-msg-footer {
+  margin-top: 0.28rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.chat-reacciones-activas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+}
+
+.chat-reaccion-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.08rem 0.38rem;
+  font-size: 0.66rem;
+  background: var(--tema-sup);
+  border: 1px solid var(--tema-borde);
+  color: var(--tema-texto);
+  cursor: pointer;
+}
+
+.chat-reaccion-pill.is-mia {
+  border-color: var(--gambeta-amarillo);
+  background: rgba(253, 208, 3, 0.16);
+}
+
+.chat-reacciones-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+  opacity: 0.65;
+  transition: opacity 0.15s ease;
+}
+
+.chat-msg-card:hover .chat-reacciones-picker {
+  opacity: 1;
+}
+
+.chat-reaccion-add {
+  padding: 0.05rem 0.22rem;
+  font-size: 0.72rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.chat-reaccion-add:hover {
+  transform: scale(1.25);
+}
+
+.chat-reply-box {
+  margin-top: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--tema-sup-2);
+  border-left: 3px solid var(--gambeta-amarillo);
+}
+
+.chat-emojis-bar {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.chat-emoji-btn {
+  padding: 0.18rem 0.4rem;
+  font-size: 0.85rem;
+  background: var(--tema-sup-2);
+  border: 1px solid var(--tema-borde);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.chat-emoji-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--gambeta-amarillo);
+}
+
+.chat-rapidos button.is-gol {
+  background: var(--gambeta-amarillo) !important;
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+  font-weight: 900 !important;
+}
+

@@ -33,8 +33,8 @@
   <link rel="apple-touch-icon" href="./logo/og-gambeta.png" />
   <link rel="preload" href="./data/catalogo-pro.json" as="fetch" crossorigin />
   <link rel="preconnect" href="https://barinaslive1.boldmss.com" crossorigin />
-  <link rel="stylesheet" href="./css/app.css?v=gambeta7" />
-  <link rel="stylesheet" href="./css/gambeta.css?v=gambeta7" />
+  <link rel="stylesheet" href="./css/app.css?v=gambeta8" />
+  <link rel="stylesheet" href="./css/gambeta.css?v=gambeta8" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap" media="print" onload="this.media='all'" />
 </head>
@@ -92,10 +92,10 @@
       <span id="info-lista" class="min-w-0 truncate text-right text-xs text-slate-400"></span>
 
       <div class="cabecera-acciones">
-        <div id="usuario-activo-badge" class="badge-miembro" hidden>
+        <button id="usuario-activo-badge" type="button" class="badge-miembro cursor-pointer" title="Ver mi cuenta y actividad del club" hidden>
           <span class="badge-miembro-punto"></span>
           <span id="usuario-activo-nombre">Amigo</span>
-        </div>
+        </button>
         <button id="btn-tema" type="button" class="btn-cabecera" title="Cambiar entre Modo Claro y Modo Oscuro">
           <span id="icono-tema" aria-hidden="true">☀</span>
           <span id="texto-tema">Modo Claro</span>
@@ -273,13 +273,85 @@
           <p id="estado-senales" class="sr-only" role="status"></p>
         </section>
 
-        <!-- Chat privado del parche -->
-        <details id="caja-chat" class="caja-plegable">
-          <summary>Chat de la Tribuna <span class="text-xs font-normal text-slate-500">· comenta el partido con tus amigos</span></summary>
+        <!-- Chat privado interactivo del parche -->
+        <details id="caja-chat" class="caja-plegable caja-chat-interactiva" open>
+          <summary>
+            <span class="flex items-center gap-2">
+              <span>Chat de la Tribuna</span>
+              <span id="chat-online-pill" class="chat-online-pill">● En cancha</span>
+              <span id="chat-badge-nuevos" class="chat-badge-nuevos" hidden>0</span>
+            </span>
+            <span class="text-xs font-normal text-slate-400">Plegar / Desplegar</span>
+          </summary>
           <section id="chat-partido" aria-labelledby="chat-titulo">
-            <div class="chat-cabecera"><h2 id="chat-titulo">Chat del Partido en Vivo</h2><span id="chat-estado" role="status">Conectando…</span></div>
-            <p class="chat-nota">Comenta el partido en tiempo real con el grupo.</p>
-            <div id="chat-mensajes" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mensajes del grupo"><p id="chat-vacio">Todavía no hay mensajes. ¡Escribe el primero!</p></div>
+            <div class="chat-cabecera">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 id="chat-titulo">Tribuna en Vivo</h2>
+                <span id="chat-estado" role="status">Conectando…</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button id="btn-chat-encuesta" type="button" class="chat-tool-btn" title="Crear o ver polla/encuesta del partido">
+                  📊 Polla en vivo
+                </button>
+                <button id="btn-chat-sonido" type="button" class="chat-tool-btn" aria-pressed="true" title="Activar/silenciar sonido del chat">
+                  🔔 Sonido
+                </button>
+              </div>
+            </div>
+
+            <!-- Polla / Encuesta en vivo del partido -->
+            <div id="chat-encuesta-activa" class="chat-encuesta-box" hidden></div>
+
+            <!-- Formulario para crear una polla rápida -->
+            <form id="form-chat-encuesta" class="chat-encuesta-crear" autocomplete="off" hidden>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-auriverde-oro">📊 Armar Polla / Encuesta Rápida</span>
+                <button id="btn-cerrar-crear-encuesta" type="button" class="text-xs text-slate-400 hover:text-white">Cerrar ✕</button>
+              </div>
+              <input id="encuesta-pregunta" type="text" maxlength="90" placeholder="Ej. ¿Quién gana hoy el partido?" class="mt-2 w-full border border-linea bg-fondo px-2.5 py-1.5 text-xs text-white" />
+              <div class="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+                <input id="encuesta-op1" type="text" maxlength="40" placeholder="Opción 1 (ej. Local)" class="border border-linea bg-fondo px-2.5 py-1.5 text-xs text-white" />
+                <input id="encuesta-op2" type="text" maxlength="40" placeholder="Opción 2 (ej. Empate)" class="border border-linea bg-fondo px-2.5 py-1.5 text-xs text-white" />
+                <input id="encuesta-op3" type="text" maxlength="40" placeholder="Opción 3 (ej. Visitante)" class="border border-linea bg-fondo px-2.5 py-1.5 text-xs text-white" />
+              </div>
+              <div class="mt-2 flex justify-end gap-2">
+                <button type="submit" class="btn-primario !px-3 !py-1 text-xs">Publicar encuesta</button>
+              </div>
+            </form>
+
+            <!-- Banner animado de GOL y contenedor de reacciones flotantes -->
+            <div class="chat-stage-wrap">
+              <div id="chat-banner-gol" class="chat-banner-gol" hidden>⚽ ¡GOOOOOOOL EN LA TRIBUNA! ⚽</div>
+              <div id="chat-floating-layer" class="chat-floating-layer" aria-hidden="true"></div>
+              <div id="chat-mensajes" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mensajes del grupo">
+                <p id="chat-vacio">Todavía no hay mensajes en la tribuna. ¡Rompe el hielo con el parche!</p>
+              </div>
+            </div>
+
+            <!-- Barra de citación al responder a un amigo -->
+            <div id="chat-reply-box" class="chat-reply-box" hidden>
+              <div class="min-w-0 flex-1 truncate text-xs">
+                Respondiendo a <strong id="chat-reply-autor" class="text-auriverde-oro"></strong>:
+                <span id="chat-reply-texto" class=" opacity-80"></span>
+              </div>
+              <button id="btn-cancelar-reply" type="button" class="text-xs font-bold text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <!-- Barra rápida de Emojis insertables y explosiones -->
+            <div class="chat-emojis-bar" aria-label="Emojis rápidos">
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="⚽" title="Balón">⚽</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="🔥" title="Fuego">🔥</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="😂" title="Risa">😂</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="🍻" title="Cerveza">🍻</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="🏆" title="Trofeo">🏆</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="🐐" title="GOAT">🐐</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="🇨🇴" title="Colombia">🇨🇴</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="👏" title="Aplausos">👏</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="👀" title="Ojo">👀</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="🟨" title="Amarilla">🟨</button>
+              <button type="button" class="chat-emoji-btn" data-chat-emoji="🟥" title="Roja">🟥</button>
+            </div>
+
             <form id="chat-form" autocomplete="off">
               <div class="chat-identidad">
                 <label>Tu Nombre / Apodo<input id="chat-apodo" name="apodo" maxlength="24" placeholder="Tu apodo" required /></label>
@@ -287,12 +359,20 @@
                   <option value="Colombia" selected>Colombia</option><option>Chile</option><option>Argentina</option><option>Perú</option><option>México</option><option>Ecuador</option><option>Uruguay</option><option>Brasil</option><option>España</option><option>Estados Unidos</option><option>Otro</option>
                 </select></label>
               </div>
-              <div class="chat-componer"><label class="sr-only" for="chat-texto">Mensaje</label><input id="chat-texto" name="mensaje" maxlength="180" placeholder="¡Qué golazo! ¿Cómo les va la señal?" required /><button id="chat-enviar" type="submit">Enviar</button></div>
+              <div class="chat-componer">
+                <label class="sr-only" for="chat-texto">Mensaje</label>
+                <input id="chat-texto" name="mensaje" maxlength="200" placeholder="Escribe un mensaje o reacciona al partido…" required />
+                <button id="chat-enviar" type="submit">Enviar</button>
+              </div>
             </form>
-            <div class="chat-rapidos" aria-label="Mensajes rápidos">
-              <button type="button" data-chat-rapido="fluido">Se ve 10/10</button>
-              <button type="button" data-chat-rapido="corte">Se cortó esta señal</button>
-              <button type="button" data-chat-rapido="gol">¡GOOOOL!</button>
+
+            <div class="chat-rapidos" aria-label="Gritos de tribuna rápidos">
+              <button type="button" data-chat-rapido="gol" class="is-gol">⚽ ¡GOOOOL!</button>
+              <button type="button" data-chat-rapido="fuego">🔥 ¡Qué partidazo!</button>
+              <button type="button" data-chat-rapido="var">🟨 ¡Pidan el VAR!</button>
+              <button type="button" data-chat-rapido="salud">🍻 ¡Salud parche!</button>
+              <button type="button" data-chat-rapido="fluido">📡 Se ve 10/10</button>
+              <button type="button" data-chat-rapido="corte">⚠️ Se cortó señal</button>
             </div>
             <div id="chat-oferta-servidor" role="status" hidden><p id="chat-oferta-texto"></p><button id="chat-cambiar-servidor" type="button">Cambiar ahora al siguiente servidor</button></div>
             <p id="chat-error" role="status" hidden></p>
@@ -494,93 +574,157 @@
         </form>
       </div>
 
-      <!-- PASO 2: Panel CRUD Completo -->
+      <!-- PASO 2: Panel CRUD Completo + Pestaña de Actividad (Solo Stiven) -->
       <div id="admin-vista-crud" hidden>
-        <div id="admin-barra-stiven" class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-          <span id="admin-modo-almacenamiento">🟢 Guardado en Servidor (data/usuarios.json)</span>
-          <div class="flex flex-wrap gap-2">
-            <button id="admin-btn-exportar" type="button" class="control !px-2.5 !py-1 text-xs">📥 Exportar JSON</button>
-            <label class="control !px-2.5 !py-1 text-xs cursor-pointer">
-              📤 Importar JSON
-              <input id="admin-input-importar" type="file" accept=".json,application/json" class="sr-only" />
-            </label>
-          </div>
+        <!-- Pestañas de la cuenta de Stiven -->
+        <div id="admin-tabs-stiven" class="admin-tabs-nav" role="tablist" aria-label="Secciones de administración" hidden>
+          <button type="button" class="admin-tab-btn is-activa" data-admin-tab="miembros" role="tab" aria-selected="true">
+            👥 Miembros y Accesos
+          </button>
+          <button type="button" class="admin-tab-btn" data-admin-tab="actividad" role="tab" aria-selected="false">
+            📊 Actividad, Online e IPs <span id="admin-tab-badge-online" class="admin-tab-pill">0 online</span>
+          </button>
         </div>
 
-        <!-- Estadísticas -->
-        <div class="admin-stats">
-          <div class="admin-stat-card">
-            <div id="admin-stat-total" class="admin-stat-valor">0</div>
-            <div id="admin-stat-label-total" class="admin-stat-label">Total Amigos</div>
-          </div>
-          <div class="admin-stat-card">
-            <div id="admin-stat-activos" class="admin-stat-valor text-cancha">0</div>
-            <div class="admin-stat-label">Con Acceso Activo</div>
-          </div>
-          <div class="admin-stat-card">
-            <div id="admin-stat-pausados" class="admin-stat-valor text-amber-400">0</div>
-            <div class="admin-stat-label">Pausados</div>
-          </div>
-        </div>
-
-        <!-- Formulario Agregar / Editar -->
-        <form id="form-admin-usuario" class="admin-form-box" autocomplete="off">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h3 id="admin-form-titulo" class="text-sm font-bold text-auriverde-oro">+ Agregar nuevo amigo autorizado</h3>
-            <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-300">
-              <input id="admin-input-activo" type="checkbox" checked class="h-4 w-4 rounded accent-cancha" />
-              Acceso habilitado
-            </label>
-          </div>
-
-          <div class="mt-3 grid gap-2.5 sm:grid-cols-3">
-            <div>
-              <label for="admin-input-nombre" class="block text-[11px] font-semibold uppercase text-slate-400">Nombre / Apodo *</label>
-              <input id="admin-input-nombre" type="text" maxlength="50" placeholder="Ej. Pipe, Juancho..." required
-                class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
-            </div>
-            <div>
-              <label for="admin-input-telefono" class="block text-[11px] font-semibold uppercase text-slate-400">Teléfono (Contraseña) *</label>
-              <input id="admin-input-telefono" type="tel" inputmode="tel" maxlength="20" placeholder="Ej. 300 123 4567" required
-                class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 font-mono text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
-            </div>
-            <div>
-              <label for="admin-input-nota" class="block text-[11px] font-semibold uppercase text-slate-400">Nota / Grupo (opcional)</label>
-              <input id="admin-input-nota" type="text" maxlength="60" placeholder="Ej. Parche Fútbol"
-                class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+        <!-- SUB-PANEL 1: GESTIÓN DE MIEMBROS (CRUD) -->
+        <div id="admin-panel-miembros">
+          <div id="admin-barra-stiven" class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+            <span id="admin-modo-almacenamiento">🟢 Guardado en Servidor (data/usuarios.json)</span>
+            <div class="flex flex-wrap gap-2">
+              <button id="admin-btn-exportar" type="button" class="control !px-2.5 !py-1 text-xs">📥 Exportar JSON</button>
+              <label class="control !px-2.5 !py-1 text-xs cursor-pointer">
+                📤 Importar JSON
+                <input id="admin-input-importar" type="file" accept=".json,application/json" class="sr-only" />
+              </label>
             </div>
           </div>
 
-          <div class="mt-3 flex flex-wrap items-center gap-2">
-            <button id="admin-btn-guardar" type="submit" class="btn-primario !py-2 text-xs">
-              + Agregar amigo
-            </button>
-            <button id="admin-btn-cancelar-edicion" type="button" class="btn-secundario !py-2 text-xs" hidden>
-              Cancelar edición
-            </button>
+          <!-- Estadísticas -->
+          <div class="admin-stats">
+            <div class="admin-stat-card">
+              <div id="admin-stat-total" class="admin-stat-valor">0</div>
+              <div id="admin-stat-label-total" class="admin-stat-label">Total Amigos</div>
+            </div>
+            <div class="admin-stat-card">
+              <div id="admin-stat-activos" class="admin-stat-valor text-cancha">0</div>
+              <div class="admin-stat-label">Con Acceso Activo</div>
+            </div>
+            <div class="admin-stat-card">
+              <div id="admin-stat-pausados" class="admin-stat-valor text-amber-400">0</div>
+              <div class="admin-stat-label">Pausados</div>
+            </div>
           </div>
-        </form>
 
-        <div id="admin-feedback" role="status" hidden></div>
+          <!-- Formulario Agregar / Editar -->
+          <form id="form-admin-usuario" class="admin-form-box" autocomplete="off">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 id="admin-form-titulo" class="text-sm font-bold text-auriverde-oro">+ Agregar nuevo amigo autorizado</h3>
+              <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-300">
+                <input id="admin-input-activo" type="checkbox" checked class="h-4 w-4 rounded accent-cancha" />
+                Acceso habilitado
+              </label>
+            </div>
 
-        <!-- Buscador de amigos -->
-        <div class="mt-4 flex items-center justify-between gap-2">
-          <input id="admin-buscar" type="search" placeholder="Buscar amigo por nombre, teléfono o nota…"
-            class="w-full rounded-xl border border-linea bg-fondo px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:border-cancha/60 focus:outline-none" />
-        </div>
+            <div class="mt-3 grid gap-2.5 sm:grid-cols-3">
+              <div>
+                <label for="admin-input-nombre" class="block text-[11px] font-semibold uppercase text-slate-400">Nombre / Apodo *</label>
+                <input id="admin-input-nombre" type="text" maxlength="50" placeholder="Ej. Pipe, Juancho..." required
+                  class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+              </div>
+              <div>
+                <label for="admin-input-telefono" class="block text-[11px] font-semibold uppercase text-slate-400">Teléfono (Contraseña) *</label>
+                <input id="admin-input-telefono" type="tel" inputmode="tel" maxlength="20" placeholder="Ej. 300 123 4567" required
+                  class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 font-mono text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+              </div>
+              <div>
+                <label for="admin-input-nota" class="block text-[11px] font-semibold uppercase text-slate-400">Nota / Grupo (opcional)</label>
+                <input id="admin-input-nota" type="text" maxlength="60" placeholder="Ej. Parche Fútbol"
+                  class="mt-1 w-full rounded-lg border border-linea bg-fondo px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cancha/60 focus:outline-none" />
+              </div>
+            </div>
 
-        <!-- Lista de usuarios -->
-        <div id="admin-lista-usuarios" class="admin-lista-scroll scroll-fino"></div>
-
-        <!-- Cambiar PIN Maestro (solo Stiven) -->
-        <details id="admin-cambiar-pin-box" class="mt-4 border-t border-linea pt-3 text-xs text-slate-400">
-          <summary class="cursor-pointer font-semibold hover:text-white">Cambiar PIN Maestro de Administrador</summary>
-          <form id="form-admin-cambiar-pin" class="mt-2 flex flex-wrap gap-2" autocomplete="off">
-            <input id="admin-input-nuevo-pin" type="password" placeholder="Nuevo PIN (mínimo 4 caracteres)"
-              class="min-w-0 flex-1 rounded-lg border border-linea bg-fondo px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none" />
-            <button type="submit" class="control text-xs">Actualizar PIN</button>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <button id="admin-btn-guardar" type="submit" class="btn-primario !py-2 text-xs">
+                + Agregar amigo
+              </button>
+              <button id="admin-btn-cancelar-edicion" type="button" class="btn-secundario !py-2 text-xs" hidden>
+                Cancelar edición
+              </button>
+            </div>
           </form>
-        </details>
+
+          <div id="admin-feedback" role="status" hidden></div>
+
+          <!-- Buscador de amigos -->
+          <div class="mt-4 flex items-center justify-between gap-2">
+            <input id="admin-buscar" type="search" placeholder="Buscar amigo por nombre, teléfono o nota…"
+              class="w-full rounded-xl border border-linea bg-fondo px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:border-cancha/60 focus:outline-none" />
+          </div>
+
+          <!-- Lista de usuarios -->
+          <div id="admin-lista-usuarios" class="admin-lista-scroll scroll-fino"></div>
+
+          <!-- Cambiar PIN Maestro (solo Stiven) -->
+          <details id="admin-cambiar-pin-box" class="mt-4 border-t border-linea pt-3 text-xs text-slate-400">
+            <summary class="cursor-pointer font-semibold hover:text-white">Cambiar PIN Maestro de Administrador</summary>
+            <form id="form-admin-cambiar-pin" class="mt-2 flex flex-wrap gap-2" autocomplete="off">
+              <input id="admin-input-nuevo-pin" type="password" placeholder="Nuevo PIN (mínimo 4 caracteres)"
+                class="min-w-0 flex-1 rounded-lg border border-linea bg-fondo px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none" />
+              <button type="submit" class="control text-xs">Actualizar PIN</button>
+            </form>
+          </details>
+        </div>
+
+        <!-- SUB-PANEL 2: MONITOR DE ACTIVIDAD, TIEMPO ONLINE, IPS Y RANKING (SOLO STIVEN) -->
+        <div id="admin-panel-actividad" class="mt-3" hidden>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p id="act-subtitulo-estado" class="text-xs text-slate-400">Monitoreo en tiempo real de sesiones, direcciones IP y tiempo de visualización.</p>
+            <button id="btn-refrescar-actividad" type="button" class="btn-primario !px-2.5 !py-1 text-xs">
+              ↻ Actualizar ahora
+            </button>
+          </div>
+
+          <!-- Resumen de Actividad -->
+          <div class="admin-stats admin-stats-4">
+            <div class="admin-stat-card">
+              <div id="act-stat-online" class="admin-stat-valor text-cancha">0</div>
+              <div class="admin-stat-label">En Línea Ahora</div>
+            </div>
+            <div class="admin-stat-card">
+              <div id="act-stat-tiempo" class="admin-stat-valor text-auriverde-oro">0m</div>
+              <div class="admin-stat-label">Tiempo Total Online</div>
+            </div>
+            <div class="admin-stat-card">
+              <div id="act-stat-ingresos" class="admin-stat-valor">0</div>
+              <div class="admin-stat-label">Ingresos Totales</div>
+            </div>
+            <div class="admin-stat-card">
+              <div id="act-stat-mensajes" class="admin-stat-valor">0</div>
+              <div class="admin-stat-label">Mensajes Chat</div>
+            </div>
+          </div>
+
+          <!-- Ranking: Quiénes son los más activos -->
+          <div class="act-bloque mt-3">
+            <h3 class="act-bloque-titulo">🏆 Ranking: Miembros Más Activos</h3>
+            <div id="act-lista-ranking" class="act-ranking-lista"></div>
+          </div>
+
+          <!-- Detalle por persona registrada: Tiempo online, Estado, IPs y Dispositivo -->
+          <div class="act-bloque mt-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="act-bloque-titulo">📡 Personas Registradas · Tiempo Online e IPs</h3>
+              <span class="text-[11px] text-slate-400">Ordenado por conectados y actividad reciente</span>
+            </div>
+            <div id="act-lista-detalle" class="act-detalle-scroll scroll-fino"></div>
+          </div>
+
+          <!-- Historial reciente de accesos e IPs -->
+          <details class="act-bloque mt-3" open>
+            <summary class="act-bloque-titulo cursor-pointer">🕵️ Historial Reciente de Ingresos y Direcciones IP</summary>
+            <div id="act-lista-historial" class="act-historial-scroll scroll-fino mt-2"></div>
+          </details>
+        </div>
       </div>
     </div>
   </dialog>
@@ -697,18 +841,18 @@
     <button id="btn-privacidad" type="button" class="hidden" hidden>Privacidad</button>
   </footer>
 
-  <script src="./js/parser.js?v=gambeta7"></script>
-  <script src="./js/player.js?v=gambeta7"></script>
-  <script src="./js/tnt-fuentes.js?v=gambeta7"></script>
-  <script src="./js/verificador.js?v=gambeta7"></script>
-  <script src="./js/estados-canales.js?v=gambeta7"></script>
-  <script src="./js/epg.js?v=gambeta7"></script>
-  <script src="./js/agenda.js?v=gambeta7"></script>
-  <script src="./js/analizador.js?v=gambeta7"></script>
-  <script src="./js/analitica.js?v=gambeta7"></script>
-  <script src="./js/servidores.js?v=gambeta7"></script>
-  <script src="./js/chat.js?v=gambeta7"></script>
-  <script src="./js/app.js?v=gambeta7"></script>
-  <script src="./js/acceso.js?v=gambeta7"></script>
+  <script src="./js/parser.js?v=gambeta8"></script>
+  <script src="./js/player.js?v=gambeta8"></script>
+  <script src="./js/tnt-fuentes.js?v=gambeta8"></script>
+  <script src="./js/verificador.js?v=gambeta8"></script>
+  <script src="./js/estados-canales.js?v=gambeta8"></script>
+  <script src="./js/epg.js?v=gambeta8"></script>
+  <script src="./js/agenda.js?v=gambeta8"></script>
+  <script src="./js/analizador.js?v=gambeta8"></script>
+  <script src="./js/analitica.js?v=gambeta8"></script>
+  <script src="./js/servidores.js?v=gambeta8"></script>
+  <script src="./js/chat.js?v=gambeta8"></script>
+  <script src="./js/app.js?v=gambeta8"></script>
+  <script src="./js/acceso.js?v=gambeta8"></script>
 </body>
 </html>

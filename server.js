@@ -77,10 +77,11 @@ function leerUsuariosDb() {
     const raw = fs.readFileSync(DB_USUARIOS, 'utf8');
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.usuarios)) parsed.usuarios = [];
+    if (!Array.isArray(parsed.historialAccesos)) parsed.historialAccesos = [];
     if (!parsed.adminPin) parsed.adminPin = '0418';
     return parsed;
   } catch (err) {
-    return { adminPin: '0418', actualizado: new Date().toISOString(), usuarios: [] };
+    return { adminPin: '0418', actualizado: new Date().toISOString(), usuarios: [], historialAccesos: [] };
   }
 }
 
@@ -92,11 +93,14 @@ function guardarUsuariosDb(db) {
 
 function leerChatDb() {
   try {
-    if (!fs.existsSync(DB_CHAT)) return { mensajes: [] };
+    if (!fs.existsSync(DB_CHAT)) return { mensajes: [], encuesta: null };
     const parsed = JSON.parse(fs.readFileSync(DB_CHAT, 'utf8'));
-    return { mensajes: Array.isArray(parsed.mensajes) ? parsed.mensajes : [] };
+    return {
+      mensajes: Array.isArray(parsed.mensajes) ? parsed.mensajes : [],
+      encuesta: parsed.encuesta && typeof parsed.encuesta === 'object' ? parsed.encuesta : null,
+    };
   } catch {
-    return { mensajes: [] };
+    return { mensajes: [], encuesta: null };
   }
 }
 
@@ -108,6 +112,141 @@ function guardarChatDb(chat) {
 }
 
 const TELEFONO_ADMIN_PRINCIPAL = '3026444564';
+const VENTANA_ONLINE_MS = 75 * 1000; // 75s para considerar conectado en tiempo real
+
+function obtenerIpCliente(req) {
+  const candidatos = [
+    req.headers['cf-connecting-ip'],
+    req.headers['x-real-ip'],
+    req.headers['x-forwarded-for'],
+    req.socket?.remoteAddress,
+  ];
+  for (const raw of candidatos) {
+    if (!raw) continue;
+    const primera = String(raw).split(',')[0].trim();
+    if (!primera) continue;
+    const limpia = primera.replace(/^::ffff:/i, '');
+    if (limpia === '::1') return '127.0.0.1';
+    return limpia;
+  }
+  return 'Desconocida';
+}
+
+function detectarDispositivo(uaRaw) {
+  const ua = String(uaRaw || '');
+  if (!ua) return 'Navegador Web';
+  let so = 'Web';
+  if (/SmartTV|Tizen|Web0S|NetCast|BRAVIA|AFT/i.test(ua)) so = 'Smart TV';
+  else if (/iPhone/i.test(ua)) so = 'iPhone';
+  else if (/iPad/i.test(ua)) so = 'iPad';
+  else if (/Android/i.test(ua)) so = 'Android';
+  else if (/Windows/i.test(ua)) so = 'Windows';
+  else if (/Macintosh|Mac OS X/i.test(ua)) so = 'Mac';
+  else if (/Linux/i.test(ua)) so = 'Linux';
+
+  let nav = '';
+  if (/Edg\//i.test(ua)) nav = 'Edge';
+  else if (/OPR\/|Opera/i.test(ua)) nav = 'Opera';
+  else if (/CriOS|Chrome\//i.test(ua) && !/Edg\//i.test(ua)) nav = 'Chrome';
+  else if (/FxiOS|Firefox\//i.test(ua)) nav = 'Firefox';
+  else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) nav = 'Safari';
+
+  return nav ? `${so} · ${nav}` : so;
+}
+
+function registrarActividadUsuario(db, usuario, req, opciones = {}) {
+  if (!usuario) return;
+  const ahoraIso = new Date().toISOString();
+  const ahoraMs = Date.now();
+  const ip = obtenerIpCliente(req);
+  const dispositivo = detectarDispositivo(req.headers['user-agent']);
+  const canal = opciones.canal !== undefined ? String(opciones.canal || '').trim().slice(0, 70) : undefined;
+
+  if (opciones.esHeartbeat && usuario.ultimoHeartbeat) {
+    const prevMs = Date.parse(usuario.ultimoHeartbeat);
+    if (!Number.isNaN(prevMs)) {
+      const deltaSeg = Math.round((ahoraMs - prevMs) / 1000);
+      if (deltaSeg >= 3 && deltaSeg <= 95) {
+        usuario.tiempoOnlineSegundos = (Number(usuario.tiempoOnlineSegundos) || 0) + deltaSeg;
+      }
+    }
+  }
+
+  if (opciones.esLogin) {
+    usuario.sesionesCount = (Number(usuario.sesionesCount) || 0) + 1;
+    if (!Array.isArray(db.historialAccesos)) db.historialAccesos = [];
+    db.historialAccesos.unshift({
+      id: `acc-${ahoraMs.toString(36)}-${crypto.randomBytes(2).toString('hex')}`,
+      usuarioId: usuario.id,
+      nombre: usuario.nombre,
+      telefono: usuario.telefono,
+      ip,
+      dispositivo,
+      fecha: ahoraIso,
+      tipo: 'ingreso',
+    });
+    if (db.historialAccesos.length > 100) {
+      db.historialAccesos = db.historialAccesos.slice(0, 100);
+    }
+  }
+
+  if (opciones.esChat) {
+    usuario.mensajesChatCount = (Number(usuario.mensajesChatCount) || 0) + 1;
+  }
+
+  usuario.ultimoAcceso = ahoraIso;
+  usuario.ultimoHeartbeat = ahoraIso;
+  usuario.ultimaIp = ip;
+  usuario.ultimoDispositivo = dispositivo;
+  if (canal !== undefined) {
+    usuario.ultimoCanal = canal;
+  }
+
+  if (!Array.isArray(usuario.ips)) usuario.ips = [];
+  if (ip && ip !== 'Desconocida') {
+    const existente = usuario.ips.find((item) => item && item.ip === ip);
+    if (existente) {
+      existente.ultimo = ahoraIso;
+      existente.dispositivo = dispositivo;
+      if (opciones.esLogin) {
+        existente.veces = (Number(existente.veces) || 1) + 1;
+      }
+    } else {
+      usuario.ips.unshift({
+        ip,
+        dispositivo,
+        primero: ahoraIso,
+        ultimo: ahoraIso,
+        veces: 1,
+      });
+      if (usuario.ips.length > 12) {
+        usuario.ips = usuario.ips.slice(0, 12);
+      }
+    }
+  }
+}
+
+function enriquecerUsuarioConMetricas(u, ahoraMs = Date.now()) {
+  const hbMs = u.ultimoHeartbeat ? Date.parse(u.ultimoHeartbeat) : 0;
+  const enLinea = Boolean(hbMs && !Number.isNaN(hbMs) && ahoraMs - hbMs < VENTANA_ONLINE_MS);
+  const tiempoOnlineSegundos = Number(u.tiempoOnlineSegundos) || 0;
+  const sesionesCount = Number(u.sesionesCount) || (u.ultimoAcceso ? 1 : 0);
+  const mensajesChatCount = Number(u.mensajesChatCount) || 0;
+  const puntajeActividad = Math.round((tiempoOnlineSegundos / 60) * 2 + sesionesCount * 10 + mensajesChatCount * 5);
+
+  return {
+    ...u,
+    enLinea,
+    tiempoOnlineSegundos,
+    sesionesCount,
+    mensajesChatCount,
+    ultimaIp: u.ultimaIp || (Array.isArray(u.ips) && u.ips[0]?.ip) || null,
+    ultimoDispositivo: u.ultimoDispositivo || null,
+    ultimoCanal: enLinea ? u.ultimoCanal || 'En la plataforma' : u.ultimoCanal || null,
+    ips: Array.isArray(u.ips) ? u.ips : [],
+    puntajeActividad,
+  };
+}
 
 function responderJson(res, status, datos) {
   const payload = JSON.stringify(datos);
@@ -181,7 +320,7 @@ function resolverActorMiembros(req, body, db, urlObj) {
   }
 
   if (telLimpio) {
-    if (esTelefonoStiven(telLimpio) && pinOk) {
+    if (esTelefonoStiven(telLimpio) || pinOk) {
       return {
         autorizado: true,
         esStiven: true,
@@ -205,8 +344,11 @@ function resolverActorMiembros(req, body, db, urlObj) {
 
 function filtrarUsuariosParaActor(usuarios, actor) {
   if (!actor || !actor.autorizado) return [];
-  if (actor.esStiven) return usuarios;
-  return usuarios.filter(u => u.creadoPor && telefonosCoinciden(u.creadoPor, actor.telefono));
+  const ahoraMs = Date.now();
+  if (actor.esStiven) return usuarios.map((u) => enriquecerUsuarioConMetricas(u, ahoraMs));
+  return usuarios
+    .filter(u => u.creadoPor && telefonosCoinciden(u.creadoPor, actor.telefono))
+    .map((u) => enriquecerUsuarioConMetricas(u, ahoraMs));
 }
 
 const server = http.createServer(async (req, res) => {
@@ -357,26 +499,64 @@ const server = http.createServer(async (req, res) => {
       return responderJson(res, 503, { error: 'Catálogo no disponible' });
     }
 
-    /* ==================== API: CHAT DEL PARTIDO ==================== */
+    /* ==================== API: CHAT INTERACTIVO DEL PARTIDO ==================== */
     if (pathname === '/api/chat') {
       if (req.method === 'GET') {
         const chat = leerChatDb();
-        return responderJson(res, 200, { mensajes: chat.mensajes.slice(-80) });
+        const db = leerUsuariosDb();
+        const ahoraMs = Date.now();
+        const onlineUsers = db.usuarios
+          .map((u) => enriquecerUsuarioConMetricas(u, ahoraMs))
+          .filter((u) => u.enLinea);
+        return responderJson(res, 200, {
+          mensajes: chat.mensajes.slice(-80),
+          encuesta: chat.encuesta || null,
+          onlineCount: Math.max(1, onlineUsers.length),
+          onlineNombres: onlineUsers.map((u) => u.nombre).slice(0, 12),
+        });
       }
       if (req.method === 'POST') {
         const body = await leerBodyJson(req);
         const apodo = String(body.apodo || '').trim().slice(0, 28);
-        const pais = String(body.pais || 'Club').trim().slice(0, 28);
-        const texto = String(body.texto || '').trim().slice(0, 200);
+        const pais = String(body.pais || 'Colombia').trim().slice(0, 28);
+        const texto = String(body.texto || '').trim().slice(0, 220);
+        const tipo = String(body.tipo || 'mensaje').trim().slice(0, 24);
         const canal = String(body.canal || '').trim().slice(0, 60);
+        const tel = normalizarTelefono(body.telefono || req.headers['x-member-phone'] || '');
         if (!apodo || !texto) return responderJson(res, 400, { error: 'Apodo y mensaje requeridos' });
+
+        // Registrar participación en actividad del miembro si está identificado
+        let esAdminMsg = false;
+        if (tel) {
+          const db = leerUsuariosDb();
+          const usr = db.usuarios.find((u) => telefonosCoinciden(u.telefono, tel));
+          if (usr) {
+            esAdminMsg = esTelefonoStiven(usr.telefono);
+            registrarActividadUsuario(db, usr, req, { esChat: true, canal: canal || undefined });
+            guardarUsuariosDb(db);
+          }
+        }
+
+        let replyTo = null;
+        if (body.replyTo && typeof body.replyTo === 'object') {
+          replyTo = {
+            id: String(body.replyTo.id || '').slice(0, 40),
+            apodo: String(body.replyTo.apodo || '').trim().slice(0, 28),
+            texto: String(body.replyTo.texto || '').trim().slice(0, 90),
+          };
+        }
+
         const chat = leerChatDb();
         const nuevo = {
           id: `${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
           apodo,
           pais,
           texto,
+          tipo,
           canal,
+          esAdmin: esAdminMsg || apodo.toLowerCase() === 'stiven',
+          replyTo,
+          reacciones: {},
           creado: new Date().toISOString(),
         };
         chat.mensajes.push(nuevo);
@@ -384,6 +564,111 @@ const server = http.createServer(async (req, res) => {
         guardarChatDb(chat);
         return responderJson(res, 200, { ok: true, id: nuevo.id, mensaje: nuevo });
       }
+    }
+
+    if (pathname === '/api/chat/reaccion' && req.method === 'POST') {
+      const body = await leerBodyJson(req);
+      const mensajeId = String(body.mensajeId || '').trim();
+      const emoji = String(body.emoji || '').trim().slice(0, 8);
+      const autor = String(body.usuario || body.apodo || 'Hincha').trim().slice(0, 28);
+      const emojisPermitidos = ['🔥', '⚽', '😂', '👏', '🍻', '❤️'];
+      if (!mensajeId || !emojisPermitidos.includes(emoji)) {
+        return responderJson(res, 400, { ok: false, error: 'Reacción no válida' });
+      }
+      const chat = leerChatDb();
+      const msg = chat.mensajes.find((m) => String(m.id) === mensajeId);
+      if (!msg) return responderJson(res, 404, { ok: false, error: 'Mensaje no encontrado' });
+      if (!msg.reacciones || typeof msg.reacciones !== 'object') msg.reacciones = {};
+      if (!Array.isArray(msg.reacciones[emoji])) msg.reacciones[emoji] = [];
+
+      const idx = msg.reacciones[emoji].indexOf(autor);
+      if (idx >= 0) {
+        msg.reacciones[emoji].splice(idx, 1);
+        if (msg.reacciones[emoji].length === 0) delete msg.reacciones[emoji];
+      } else {
+        msg.reacciones[emoji].push(autor);
+      }
+      guardarChatDb(chat);
+      return responderJson(res, 200, { ok: true, mensajeId, reacciones: msg.reacciones });
+    }
+
+    if (pathname === '/api/chat/encuesta' && req.method === 'POST') {
+      const body = await leerBodyJson(req);
+      const accion = String(body.accion || 'votar').trim();
+      const usuario = String(body.usuario || 'Hincha').trim().slice(0, 28);
+      const chat = leerChatDb();
+
+      if (accion === 'crear') {
+        const pregunta = String(body.pregunta || '').trim().slice(0, 100);
+        const opcionesRaw = Array.isArray(body.opciones) ? body.opciones : [];
+        const opciones = opcionesRaw
+          .map((o) => String(o || '').trim().slice(0, 45))
+          .filter(Boolean)
+          .slice(0, 4);
+        if (!pregunta || opciones.length < 2) {
+          return responderJson(res, 400, { ok: false, error: 'Escribe una pregunta y al menos 2 opciones.' });
+        }
+        chat.encuesta = {
+          id: `poll-${Date.now().toString(36)}`,
+          pregunta,
+          creadaPor: usuario,
+          creada: new Date().toISOString(),
+          activa: true,
+          opciones: opciones.map((texto, i) => ({
+            id: `opt-${i}`,
+            texto,
+            votos: [],
+          })),
+        };
+        guardarChatDb(chat);
+        return responderJson(res, 200, { ok: true, encuesta: chat.encuesta });
+      }
+
+      if (accion === 'votar') {
+        const opcionId = String(body.opcionId || '').trim();
+        if (!chat.encuesta || !chat.encuesta.activa) {
+          return responderJson(res, 404, { ok: false, error: 'No hay encuesta activa.' });
+        }
+        for (const opt of chat.encuesta.opciones) {
+          if (!Array.isArray(opt.votos)) opt.votos = [];
+          opt.votos = opt.votos.filter((v) => v !== usuario);
+        }
+        const elegida = chat.encuesta.opciones.find((o) => o.id === opcionId);
+        if (elegida) elegida.votos.push(usuario);
+        guardarChatDb(chat);
+        return responderJson(res, 200, { ok: true, encuesta: chat.encuesta });
+      }
+
+      if (accion === 'cerrar') {
+        chat.encuesta = null;
+        guardarChatDb(chat);
+        return responderJson(res, 200, { ok: true, encuesta: null });
+      }
+    }
+
+    /* ==================== API: PRESENCIA / LATIDO ONLINE ==================== */
+    if (pathname === '/api/presencia/heartbeat' && req.method === 'POST') {
+      const body = await leerBodyJson(req);
+      const tel = normalizarTelefono(body.telefono || req.headers['x-member-phone'] || '');
+      const canal = body.canal !== undefined ? String(body.canal || '').trim().slice(0, 70) : undefined;
+      const db = leerUsuariosDb();
+      let encontrado = null;
+      if (tel) {
+        encontrado = db.usuarios.find((u) => telefonosCoinciden(u.telefono, tel));
+      }
+      if (encontrado && encontrado.activo !== false) {
+        registrarActividadUsuario(db, encontrado, req, { esHeartbeat: true, canal });
+        guardarUsuariosDb(db);
+      }
+      const ahoraMs = Date.now();
+      const onlineUsers = db.usuarios
+        .map((u) => enriquecerUsuarioConMetricas(u, ahoraMs))
+        .filter((u) => u.enLinea);
+      return responderJson(res, 200, {
+        ok: true,
+        onlineCount: onlineUsers.length,
+        onlineNombres: onlineUsers.map((u) => u.nombre),
+      });
     }
 
     /* ==================== API: LOGIN POR TELÉFONO ==================== */
@@ -394,11 +679,16 @@ const server = http.createServer(async (req, res) => {
 
       // Si ingresa el PIN maestro de admin, también le permite entrar como Stiven (Admin)
       if (esPinValido(entrada, db.adminPin)) {
+        const usrStiven = db.usuarios.find((u) => esTelefonoStiven(u.telefono));
+        if (usrStiven) {
+          registrarActividadUsuario(db, usrStiven, req, { esLogin: true });
+          guardarUsuariosDb(db);
+        }
         return responderJson(res, 200, {
           ok: true,
           esAdminPin: true,
           usuario: {
-            id: 'admin-master',
+            id: usrStiven?.id || 'admin-master',
             nombre: 'Stiven',
             telefono: TELEFONO_ADMIN_PRINCIPAL,
             nota: 'Administrador · Gambeta Auriverde',
@@ -422,7 +712,7 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      encontrado.ultimoAcceso = new Date().toISOString();
+      registrarActividadUsuario(db, encontrado, req, { esLogin: true });
       guardarUsuariosDb(db);
 
       return responderJson(res, 200, {
@@ -448,6 +738,8 @@ const server = http.createServer(async (req, res) => {
       if (!encontrado || encontrado.activo === false) {
         return responderJson(res, 401, { ok: false, activo: false });
       }
+      registrarActividadUsuario(db, encontrado, req, { esHeartbeat: true });
+      guardarUsuariosDb(db);
       return responderJson(res, 200, {
         ok: true,
         activo: true,
@@ -458,6 +750,47 @@ const server = http.createServer(async (req, res) => {
           nota: encontrado.nota || '',
           esStiven: esTelefonoStiven(encontrado.telefono),
         },
+      });
+    }
+
+    /* ==================== API: ACTIVIDAD, TIEMPO ONLINE, IPS Y RANKING (SOLO STIVEN) ==================== */
+    if (pathname === '/api/admin/actividad' && req.method === 'GET') {
+      const db = leerUsuariosDb();
+      const actor = resolverActorMiembros(req, {}, db, urlObj);
+      const telHeader = normalizarTelefono(req.headers['x-member-phone'] || urlObj.searchParams.get('miembro') || '');
+      const autorizadoStiven = (actor.autorizado && actor.esStiven) || esTelefonoStiven(telHeader);
+      if (!autorizadoStiven) {
+        return responderJson(res, 401, { ok: false, error: 'Solo Stiven puede ver las métricas de actividad e IPs.' });
+      }
+
+      const ahoraMs = Date.now();
+      const enriquecidos = db.usuarios.map((u) => enriquecerUsuarioConMetricas(u, ahoraMs));
+      const enLineaLista = enriquecidos.filter((u) => u.enLinea);
+      const masActivos = [...enriquecidos].sort((a, b) => {
+        if (b.puntajeActividad !== a.puntajeActividad) return b.puntajeActividad - a.puntajeActividad;
+        if (b.tiempoOnlineSegundos !== a.tiempoOnlineSegundos) return b.tiempoOnlineSegundos - a.tiempoOnlineSegundos;
+        const fa = a.ultimoAcceso ? Date.parse(a.ultimoAcceso) : 0;
+        const fb = b.ultimoAcceso ? Date.parse(b.ultimoAcceso) : 0;
+        return fb - fa;
+      });
+
+      const tiempoTotalSegundos = enriquecidos.reduce((acc, u) => acc + (u.tiempoOnlineSegundos || 0), 0);
+      const totalIngresos = enriquecidos.reduce((acc, u) => acc + (u.sesionesCount || 0), 0);
+      const totalMensajesChat = enriquecidos.reduce((acc, u) => acc + (u.mensajesChatCount || 0), 0);
+
+      return responderJson(res, 200, {
+        ok: true,
+        actualizado: new Date().toISOString(),
+        resumen: {
+          totalRegistrados: enriquecidos.length,
+          enLineaAhora: enLineaLista.length,
+          tiempoTotalSegundos,
+          totalIngresos,
+          totalMensajesChat,
+        },
+        usuarios: enriquecidos,
+        masActivos,
+        historialAccesos: Array.isArray(db.historialAccesos) ? db.historialAccesos.slice(0, 50) : [],
       });
     }
 

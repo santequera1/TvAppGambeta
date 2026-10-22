@@ -435,6 +435,52 @@
       guardarDbRespaldo(db);
       return { ok: true, usuarios: db.usuarios };
     },
+
+    async enviarHeartbeat(canal = '') {
+      if (!sesionActual?.telefono) return null;
+      try {
+        const r = await fetch('./api/presencia/heartbeat', {
+          method: 'POST',
+          headers: this.cabecerasAuth(adminPinActivo),
+          body: JSON.stringify({
+            telefono: sesionActual.telefono,
+            canal: canal || canalViendoActual || '',
+            visible: !document.hidden,
+          }),
+        });
+        if (r.ok) return await r.json();
+      } catch { /* ignore */ }
+      return null;
+    },
+
+    async obtenerActividad(pin) {
+      try {
+        const r = await fetch('./api/admin/actividad?t=' + Date.now(), {
+          method: 'GET',
+          headers: this.cabecerasAuth(pin),
+          cache: 'no-store',
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d && d.ok) return d;
+        }
+      } catch { /* fallback */ }
+      const db = await obtenerDbRespaldo();
+      const usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
+      return {
+        ok: true,
+        resumen: {
+          totalRegistrados: usuarios.length,
+          enLineaAhora: 1,
+          tiempoTotalSegundos: 0,
+          totalIngresos: usuarios.filter((u) => u.ultimoAcceso).length,
+          totalMensajesChat: 0,
+        },
+        usuarios,
+        masActivos: usuarios,
+        historialAccesos: [],
+      };
+    },
   };
 
   /* ==================== ESTADO DE SESIÓN Y ADMIN ==================== */
@@ -444,6 +490,22 @@
   let listaUsuariosAdmin = [];
   let editandoId = null;
   let filtroAdmin = '';
+  let tabAdminActual = 'miembros';
+  let canalViendoActual = '';
+  let timerRefrescoActividad = null;
+
+  function formatearDuracion(segundos) {
+    const seg = Math.max(0, Math.round(Number(segundos) || 0));
+    if (seg < 60) return seg > 0 ? `${seg}s` : '0m';
+    const min = Math.floor(seg / 60);
+    if (min < 60) return `${min} min`;
+    const horas = Math.floor(min / 60);
+    const restoMin = min % 60;
+    if (horas < 24) return restoMin > 0 ? `${horas}h ${restoMin}m` : `${horas}h`;
+    const dias = Math.floor(horas / 24);
+    const restoHoras = horas % 24;
+    return `${dias}d ${restoHoras}h`;
+  }
 
   function esSesionStiven() {
     if (!sesionActual) return false;
@@ -484,13 +546,18 @@
       if (pantalla) pantalla.hidden = true;
       document.body.classList.remove('bloqueado-acceso');
       if (badge) badge.hidden = false;
-      if (nombreSpan) nombreSpan.textContent = sesionActual.nombre;
+      if (nombreSpan) {
+        nombreSpan.textContent = esSesionStiven() ? `${sesionActual.nombre} · Mi Cuenta` : sesionActual.nombre;
+      }
       if (btnSalir) btnSalir.hidden = false;
 
       const inputApodo = $('#chat-apodo');
-      if (inputApodo && !inputApodo.value.trim()) {
+      if (inputApodo) {
         inputApodo.value = String(sesionActual.nombre).slice(0, 24);
       }
+      try {
+        global.dispatchEvent(new CustomEvent('gambeta:sesion', { detail: sesionActual }));
+      } catch { /* ignore */ }
     } else {
       if (pantalla) pantalla.hidden = false;
       document.body.classList.add('bloqueado-acceso');
@@ -502,22 +569,213 @@
     }
   }
 
-  /* ==================== RENDERIZADO DEL PANEL CRUD ==================== */
+  /* ==================== RENDERIZADO DEL PANEL CRUD Y ACTIVIDAD ==================== */
   function actualizarCabeceraVistaMiembros() {
     const barraStiven = $('#admin-barra-stiven');
     const cambiarPinBox = $('#admin-cambiar-pin-box');
+    const tabsStiven = $('#admin-tabs-stiven');
     const subtituloModal = $('#subtitulo-admin-modal');
     const labelTotal = $('#admin-stat-label-total');
 
     if (barraStiven) barraStiven.hidden = !esVistaStiven;
     if (cambiarPinBox) cambiarPinBox.hidden = !esVistaStiven;
+    if (tabsStiven) tabsStiven.hidden = !esVistaStiven;
     if (labelTotal) {
       labelTotal.textContent = esVistaStiven ? 'Total Amigos' : 'Agregados por ti';
     }
     if (subtituloModal) {
       subtituloModal.textContent = esVistaStiven
-        ? 'Vista Administrador (Stiven) · Viendo y gestionando todos los miembros del club.'
+        ? 'Mi Cuenta (Stiven) · Gestiona miembros, revisa quién está online, tiempo conectado, IPs y ranking.'
         : 'Agrega a tus amigos y gestiona únicamente las personas que tú registraste.';
+    }
+  }
+
+  function cambiarTabAdmin(tab) {
+    if (!esVistaStiven) tab = 'miembros';
+    tabAdminActual = tab;
+    const panelMiembros = $('#admin-panel-miembros');
+    const panelActividad = $('#admin-panel-actividad');
+    const botonesTab = $$('[data-admin-tab]');
+
+    botonesTab.forEach((b) => {
+      const activa = b.dataset.adminTab === tab;
+      b.classList.toggle('is-activa', activa);
+      b.setAttribute('aria-selected', activa ? 'true' : 'false');
+    });
+
+    if (panelMiembros) panelMiembros.hidden = tab !== 'miembros';
+    if (panelActividad) panelActividad.hidden = tab !== 'actividad';
+
+    clearInterval(timerRefrescoActividad);
+    if (tab === 'actividad' && esVistaStiven) {
+      void cargarActividadAdmin();
+      timerRefrescoActividad = setInterval(() => {
+        const dlg = $('#dialogo-admin');
+        if (dlg && dlg.open && tabAdminActual === 'actividad') {
+          void cargarActividadAdmin();
+        } else {
+          clearInterval(timerRefrescoActividad);
+        }
+      }, 15000);
+    }
+  }
+
+  async function cargarActividadAdmin() {
+    if (!esVistaStiven) return;
+    try {
+      const datos = await Api.obtenerActividad(adminPinActivo);
+      pintarActividadAdmin(datos);
+    } catch { /* ignore */ }
+  }
+
+  function pintarActividadAdmin(datos) {
+    if (!datos) return;
+    const res = datos.resumen || {};
+    const usuarios = Array.isArray(datos.usuarios) ? datos.usuarios : [];
+    const masActivos = Array.isArray(datos.masActivos) ? datos.masActivos : usuarios;
+    const historial = Array.isArray(datos.historialAccesos) ? datos.historialAccesos : [];
+
+    const elOnline = $('#act-stat-online');
+    const elTiempo = $('#act-stat-tiempo');
+    const elIngresos = $('#act-stat-ingresos');
+    const elMensajes = $('#act-stat-mensajes');
+    const badgeOnlineTab = $('#admin-tab-badge-online');
+
+    const cantOnline = Number(res.enLineaAhora) || usuarios.filter((u) => u.enLinea).length;
+    if (elOnline) elOnline.textContent = String(cantOnline);
+    if (elTiempo) elTiempo.textContent = formatearDuracion(res.tiempoTotalSegundos || 0);
+    if (elIngresos) elIngresos.textContent = String(res.totalIngresos || 0);
+    if (elMensajes) elMensajes.textContent = String(res.totalMensajesChat || 0);
+    if (badgeOnlineTab) badgeOnlineTab.textContent = `${cantOnline} online`;
+
+    // 1. Ranking de los más activos
+    const contRanking = $('#act-lista-ranking');
+    if (contRanking) {
+      const maxPuntaje = Math.max(10, ...masActivos.map((u) => Number(u.puntajeActividad) || 0));
+      contRanking.innerHTML = masActivos
+        .slice(0, 8)
+        .map((u, idx) => {
+          const pos = idx + 1;
+          const medalla = pos === 1 ? '🥇 #1' : pos === 2 ? '🥈 #2' : pos === 3 ? '🥉 #3' : `#${pos}`;
+          const pct = Math.min(100, Math.max(6, Math.round(((Number(u.puntajeActividad) || 0) / maxPuntaje) * 100)));
+          const tiempoTxt = formatearDuracion(u.tiempoOnlineSegundos || 0);
+          const sesiones = Number(u.sesionesCount) || (u.ultimoAcceso ? 1 : 0);
+          const chats = Number(u.mensajesChatCount) || 0;
+          return `
+            <div class="act-ranking-item ${u.enLinea ? 'is-online' : ''}">
+              <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="act-medalla ${pos <= 3 ? 'is-top' : ''}">${medalla}</span>
+                  <span class="font-bold text-sm">${esc(u.nombre)}</span>
+                  ${
+                    u.enLinea
+                      ? `<span class="act-pill-online">● En línea${u.ultimoCanal ? ' · ' + esc(u.ultimoCanal) : ''}</span>`
+                      : ''
+                  }
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                  <span>⏱ <b class="text-auriverde-oro">${esc(tiempoTxt)}</b> online</span>
+                  <span>🔑 <b>${sesiones}</b> ingresos</span>
+                  <span>💬 <b>${chats}</b> msj</span>
+                </div>
+              </div>
+              <div class="act-barra-fondo">
+                <div class="act-barra-relleno" style="width:${pct}%"></div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // 2. Personas registradas: Estado online, Tiempo, IPs y Dispositivo
+    const contDetalle = $('#act-lista-detalle');
+    if (contDetalle) {
+      const ordenados = [...usuarios].sort((a, b) => {
+        if (Boolean(b.enLinea) !== Boolean(a.enLinea)) return b.enLinea ? 1 : -1;
+        const ta = a.ultimoAcceso ? Date.parse(a.ultimoAcceso) : 0;
+        const tb = b.ultimoAcceso ? Date.parse(b.ultimoAcceso) : 0;
+        return tb - ta;
+      });
+
+      contDetalle.innerHTML = ordenados
+        .map((u) => {
+          const ipsList = Array.isArray(u.ips) ? u.ips : [];
+          const ultimaIp = u.ultimaIp || ipsList[0]?.ip || 'Sin registro aún';
+          const disp = u.ultimoDispositivo || ipsList[0]?.dispositivo || 'Sin detectar';
+          const tiempoTxt = formatearDuracion(u.tiempoOnlineSegundos || 0);
+          const sesiones = Number(u.sesionesCount) || (u.ultimoAcceso ? 1 : 0);
+          const ipsBadges = ipsList.length
+            ? ipsList
+                .map(
+                  (item) =>
+                    `<span class="act-ip-chip" title="Primera vez: ${esc(formatearFecha(item.primero))} · Última: ${esc(formatearFecha(item.ultimo))}">
+                      🌐 ${esc(item.ip)} <small>(${item.veces || 1}x · ${esc(item.dispositivo || 'Web')})</small>
+                    </span>`
+                )
+                .join('')
+            : `<span class="text-[11px] text-slate-500">Aún no ha iniciado sesión desde que se activó el monitor de IP</span>`;
+
+          return `
+            <div class="act-user-card ${u.enLinea ? 'is-online' : ''}">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-bold text-sm">${esc(u.nombre)}</span>
+                    <span class="font-mono text-xs text-auriverde-oro">${esc(u.telefono)}</span>
+                    <span class="act-status-badge ${u.enLinea ? 'is-online' : 'is-offline'}">
+                      ${u.enLinea ? '🟢 EN LÍNEA AHORA' : '⚪ Desconectado'}
+                    </span>
+                    ${
+                      u.enLinea && u.ultimoCanal
+                        ? `<span class="bg-sup-3 px-2 py-0.5 text-[11px] font-semibold text-cancha">📺 ${esc(u.ultimoCanal)}</span>`
+                        : ''
+                    }
+                  </div>
+                  <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                    <span>⏱ Tiempo online: <b class="text-white">${esc(tiempoTxt)}</b></span>
+                    <span>🔑 Sesiones: <b class="text-white">${sesiones}</b></span>
+                    <span>📱 Dispositivo: <b class="text-white">${esc(disp)}</b></span>
+                    <span>🕒 Última vez: <b>${esc(formatearFecha(u.ultimoAcceso))}</b></span>
+                  </div>
+                </div>
+                <div class="text-right text-xs">
+                  <span class="text-[10px] uppercase text-slate-400 block">Última IP</span>
+                  <span class="font-mono font-bold text-auriverde-oro">${esc(ultimaIp)}</span>
+                </div>
+              </div>
+              <div class="mt-2 border-t border-linea/60 pt-1.5">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Direcciones IP registradas (${ipsList.length}):</span>
+                <div class="flex flex-wrap gap-1.5">${ipsBadges}</div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // 3. Historial cronológico de ingresos
+    const contHistorial = $('#act-lista-historial');
+    if (contHistorial) {
+      if (!historial.length) {
+        contHistorial.innerHTML = `<p class="p-3 text-center text-xs text-slate-400">Los próximos inicios de sesión aparecerán aquí con su fecha, hora, IP y dispositivo.</p>`;
+      } else {
+        contHistorial.innerHTML = historial
+          .slice(0, 35)
+          .map(
+            (h) => `
+            <div class="act-historial-row">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-xs">${esc(h.nombre)}</span>
+                <span class="font-mono text-[11px] text-slate-400">(${esc(h.telefono)})</span>
+                <span class="act-ip-chip">🌐 IP: ${esc(h.ip || 'Desconocida')}</span>
+                <span class="text-[11px] text-slate-400">📱 ${esc(h.dispositivo || 'Web')}</span>
+              </div>
+              <span class="text-[11px] text-slate-400">${esc(formatearFecha(h.fecha))}</span>
+            </div>`
+          )
+          .join('');
+      }
     }
   }
 
@@ -587,6 +845,9 @@
             </div>
             <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
               <span class="font-mono text-auriverde-oro font-semibold">Tel: ${esc(u.telefono)}</span>
+              ${esVistaStiven && u.enLinea ? `<span class="text-cancha font-bold">● En línea ahora</span>` : ''}
+              ${esVistaStiven && u.tiempoOnlineSegundos ? `<span>⏱ ${esc(formatearDuracion(u.tiempoOnlineSegundos))}</span>` : ''}
+              ${esVistaStiven && u.ultimaIp ? `<span class="font-mono">IP: ${esc(u.ultimaIp)}</span>` : ''}
               <span>Último acceso: ${esc(formatearFecha(u.ultimoAcceso))}</span>
             </div>
           </div>
@@ -656,7 +917,7 @@
     }, 5000);
   }
 
-  async function abrirModalAdmin(pinPrevia = '') {
+  async function abrirModalAdmin(pinPrevia = '', tabInicial = 'miembros') {
     const dialogo = $('#dialogo-admin');
     const vistaLogin = $('#admin-vista-pin');
     const vistaCrud = $('#admin-vista-crud');
@@ -666,6 +927,21 @@
     if (!dialogo) return;
     if (!dialogo.open) dialogo.showModal();
 
+    // Si Stiven ya inició sesión con su teléfono (3026444564), abre directo su cuenta con ambas pestañas
+    if (sesionActual && esSesionStiven() && !pinPrevia) {
+      try {
+        const res = await Api.verificarAdmin(adminPinActivo || '');
+        esVistaStiven = true;
+        listaUsuariosAdmin = res.usuarios || [];
+        vistaLogin.hidden = true;
+        vistaCrud.hidden = false;
+        prepararEdicion(null);
+        cambiarTabAdmin(tabInicial || 'miembros');
+        void cargarActividadAdmin();
+        return;
+      } catch { /* fallback to pin */ }
+    }
+
     // Si hay un miembro logueado que NO es Stiven, entra directo a gestionar solo sus propios invitados
     if (sesionActual && !esSesionStiven() && !pinPrevia) {
       try {
@@ -674,6 +950,7 @@
         listaUsuariosAdmin = res.usuarios || [];
         vistaLogin.hidden = true;
         vistaCrud.hidden = false;
+        cambiarTabAdmin('miembros');
         prepararEdicion(null);
         return;
       } catch { /* fallback */ }
@@ -688,6 +965,8 @@
         vistaLogin.hidden = true;
         vistaCrud.hidden = false;
         prepararEdicion(null);
+        cambiarTabAdmin(tabInicial || 'miembros');
+        if (esVistaStiven) void cargarActividadAdmin();
         return;
       } catch { /* show pin prompt */ }
     }
@@ -700,6 +979,8 @@
         vistaLogin.hidden = true;
         vistaCrud.hidden = false;
         pintarTablaAdmin();
+        cambiarTabAdmin(tabInicial || tabAdminActual);
+        if (esVistaStiven) void cargarActividadAdmin();
         return;
       } catch {
         adminPinActivo = '';
@@ -777,6 +1058,8 @@
     if (linkExterno) linkExterno.href = url;
     if (tituloFicha) tituloFicha.textContent = `${nombre} · Señal Web`;
     if (metaFicha) metaFicha.textContent = 'Reproduciendo señal integrada de La18HD · Si tu navegador móvil bloquea anuncios/iframes, toca "Abrir en pestaña".';
+    canalViendoActual = `${nombre} (La18HD)`;
+    void Api.enviarHeartbeat(canalViendoActual);
     pintarLa18hd();
   }
 
@@ -880,6 +1163,24 @@
       });
     }, 120_000);
 
+    // Latido de presencia online cada 30s para registrar tiempo en línea, IP y canal actual
+    setInterval(() => {
+      if (!sesionActual?.telefono || document.hidden) return;
+      void Api.enviarHeartbeat(canalViendoActual);
+    }, 30_000);
+
+    global.addEventListener('golstream:canal', (e) => {
+      const nombre = e.detail?.nombre || '';
+      if (nombre) {
+        canalViendoActual = nombre;
+        void Api.enviarHeartbeat(canalViendoActual);
+      }
+    });
+
+    if (sesionActual?.telefono) {
+      setTimeout(() => void Api.enviarHeartbeat(canalViendoActual), 1500);
+    }
+
     // 2. Login por teléfono
     if (formLogin) {
       formLogin.addEventListener('submit', async (e) => {
@@ -917,10 +1218,33 @@
     }
 
     if (btnAbrirAdmin) {
-      btnAbrirAdmin.addEventListener('click', () => abrirModalAdmin());
+      btnAbrirAdmin.addEventListener('click', () => abrirModalAdmin('', 'miembros'));
     }
     if (btnAbrirAdminLogin) {
-      btnAbrirAdminLogin.addEventListener('click', () => abrirModalAdmin());
+      btnAbrirAdminLogin.addEventListener('click', () => abrirModalAdmin('', 'miembros'));
+    }
+    const badgeCuenta = $('#usuario-activo-badge');
+    if (badgeCuenta) {
+      badgeCuenta.addEventListener('click', () => {
+        abrirModalAdmin('', esSesionStiven() ? 'actividad' : 'miembros');
+      });
+    }
+
+    const tabsStivenEl = $('#admin-tabs-stiven');
+    if (tabsStivenEl) {
+      tabsStivenEl.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-admin-tab]');
+        if (!b) return;
+        cambiarTabAdmin(b.dataset.adminTab);
+      });
+    }
+
+    const btnRefrescarAct = $('#btn-refrescar-actividad');
+    if (btnRefrescarAct) {
+      btnRefrescarAct.addEventListener('click', () => {
+        void cargarActividadAdmin();
+        mostrarAvisoAdmin('Métricas de actividad e IPs actualizadas.', 'ok');
+      });
     }
 
     const dialogoAdmin = $('#dialogo-admin');
@@ -960,6 +1284,8 @@
             });
           }
           prepararEdicion(null);
+          cambiarTabAdmin(tabAdminActual || 'miembros');
+          if (esVistaStiven) void cargarActividadAdmin();
         } catch (err) {
           if (errorPin) {
             errorPin.textContent = err.message || 'PIN incorrecto';
@@ -991,6 +1317,8 @@
             mostrarAvisoAdmin(`${payload.nombre} agregado (${normalizarTelefono(payload.telefono)}).`, 'ok');
           }
           prepararEdicion(null);
+          cambiarTabAdmin(tabAdminActual || 'miembros');
+          if (esVistaStiven) void cargarActividadAdmin();
         } catch (err) {
           mostrarAvisoAdmin(err.message, 'error');
         }
