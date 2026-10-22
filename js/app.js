@@ -692,8 +692,7 @@ const CANALES_PARTIDO_HOY = [
     try {
       const u = new URL(c?.url);
       // Muchos streams HLS no terminan en .m3u8 (.php, /playlist, /live…): el reproductor los detecta al abrirlos.
-      return c.compatible !== false && /^https?:$/.test(u.protocol)
-        && !(location.protocol === 'https:' && u.protocol === 'http:');
+      return c.compatible !== false && /^https?:$/.test(u.protocol);
     } catch { return false; }
   }
 
@@ -706,6 +705,7 @@ const CANALES_PARTIDO_HOY = [
   }
 
   function crearDestacado(opcion, grupo, respaldo = false) {
+    if (!opcion || !opcion.nombre || !opcion.url) return null;
     const c = window.ParserM3U.parsear(`#EXTM3U\n#EXTINF:-1 group-title="Sports",${opcion.nombre}\n${opcion.url}`, location.href).canales[0];
     if (!c) return null;
     c.id = `destacado-${grupo}-${hash(c.url)}`;
@@ -734,12 +734,8 @@ const CANALES_PARTIDO_HOY = [
 
   function configurarSenales(canales) {
     for (const c of canales) if (esHlsInterno(c)) catalogoServidores.set(c.url, c);
-    const top = [
-      [CANALES_PARTIDO_HOY[0].opciones[0], CANALES_PARTIDO_HOY[0].opciones[3]],
-      [CANALES_PARTIDO_HOY[1].respaldos[0], CANALES_PARTIDO_HOY[0].opciones[5]],
-      [CANALES_PARTIDO_HOY[2].respaldos[0], CANALES_PARTIDO_HOY[2].respaldos[1]],
-    ];
-    top.forEach((opciones, i) => {
+    CANALES_PARTIDO_HOY.forEach((grupoCfg, i) => {
+      const opciones = [...(grupoCfg?.opciones || []), ...(grupoCfg?.respaldos || [])].filter(Boolean);
       const nuevos = opciones.map(o => crearDestacado(o, i));
       for (const c of nuevos) {
         if (!c || !esHlsInterno(c)) continue;
@@ -1671,8 +1667,7 @@ const CANALES_PARTIDO_HOY = [
     if (c.no247) avisos.push('No transmite las 24 horas: puede estar fuera del aire en este momento.');
     if (c.referrer) avisos.push(`Este canal exige un «Referer» especial (${c.referrer}); los navegadores no permiten enviarlo, así que puede fallar.`);
     if (c.userAgent) avisos.push('Este canal pide un User-Agent específico que el navegador no puede imitar; puede fallar.');
-    if (PAGINA_HTTPS && c.url.startsWith('http:')) avisos.push('Stream http:// en una página https://: el navegador lo bloqueará (contenido mixto).');
-    dom.fichaAvisos.innerHTML = avisos.map((a) => `<li class="flex gap-2"><span aria-hidden="true">⚠</span><span>${esc(a)}</span></li>`).join('');
+        dom.fichaAvisos.innerHTML = avisos.map((a) => `<li class="flex gap-2"><span aria-hidden="true">⚠</span><span>${esc(a)}</span></li>`).join('');
     dom.fichaAvisos.hidden = avisos.length === 0;
     const fav = estado.favoritos.has(c.url);
     dom.btnFavFicha.disabled = false;
@@ -2440,9 +2435,11 @@ const CANALES_PARTIDO_HOY = [
   dom.video.muted = true;
   dom.video.playsInline = true;
   actualizarSonido();
-  const senalInicial = candidatosPartido[0].find(c => c.url === CANALES_PARTIDO_HOY[0].url);
-  senalesPartido[0] = senalInicial;
-  ver(senalInicial, { origen: 'auto' });
+  const senalInicial = (candidatosPartido[0] || []).find(c => c.url === CANALES_PARTIDO_HOY[0]?.url) || candidatosPartido[0]?.[0];
+  if (senalInicial) {
+    senalesPartido[0] = senalInicial;
+    ver(senalInicial, { origen: 'auto' });
+  }
   // Las guías remotas se cargan a petición; no compiten con el arranque del video.
   pintarAgenda(); // lo guardado en el dispositivo se ve al instante
   alVerSeccion('#agenda', () => agenda.iniciar()); // TheSportsDB solo cuando la agenda está en pantalla
